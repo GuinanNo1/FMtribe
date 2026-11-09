@@ -42,11 +42,11 @@ can recover an FM-1 that doesn't start, too. For details, see felucca-bsp's `too
 
 ## 2. The screen
 
-![HOME 1/2, the LEVELS page FMtribe starts on: LEVEL, BD LEVEL, SN LEVEL and HH LEVEL, all 100](img/screen-ready.png "The LEVELS page")
+![HOME, the page FMtribe starts on: LEVEL 100, RHYTHM 90, CUTOFF 80, PEAK 30](img/screen-ready.png "The HOME page")
 
 | Part | What it shows |
 | --- | --- |
-| Header | The page you're on, such as LEVELS, and BLE and DEV, which light while a computer or a Bluetooth MIDI device is connected. At the right, which page of its button it is, such as 2/2, and while you play a key, the note. After a change, a message shows here for a moment, such as CUTOFF 100. |
+| Header | The page you're on, such as HOME, and BLE and DEV, which light while a computer or a Bluetooth MIDI device is connected. At the right, which page of its button it is, such as 2/2, and while you play a key, the note. After a change, a message shows here for a moment, such as CUTOFF 100. |
 | Tabs | The pages' buttons: HOME, VCO (ENV), LFO, DRUM (ARP), SEQ and GLO. The one you're on is lit, and so is its button. |
 | K1 to K4 | What the four knobs do on this page. A knob shows a bar and its value; a switch shows its position. Each lights for a moment as you turn it. |
 | Below the knobs | On the synth pages, the VCO's WAVE (SELECT) and, on LFO, the LFO's WAVE (ALGO). On DRUMS, the pads. On STEP, the pattern, a row a part. On EDIT, the synth's steps as a piano roll. |
@@ -57,14 +57,14 @@ can recover an FM-1 that doesn't start, too. For details, see felucca-bsp's `too
 
 ## 3. Controls
 
-FMtribe starts on HOME, with the levels and the controls you reach for most. The other pages follow the monotribe's
-panel from left to right: the VCO and VCF on ENV, then the LFO, then the drums and the sequencer. A page's button shows it; press the button again for its next page. The four knobs K1 to K4 edit
+FMtribe starts on HOME: the synth's and the drums' levels and the filter, the knobs you reach for most while
+playing. The other pages follow the monotribe's panel from left to right: the VCO and VCF on ENV, then the LFO,
+then the drums and the sequencer. A page's button shows it; press the button again for its next page. The four knobs K1 to K4 edit
 the page on the screen. A switch moves one position for each click of the knob.
 
 | Page (button) | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
-| LEVELS 1/2 (HOME) | LEVEL | BD LEVEL | SN LEVEL | HH LEVEL |
-| TEMPO VCF 2/2 (HOME) | TEMPO | CUTOFF | PEAK | |
+| HOME (HOME) | LEVEL | RHYTHM | CUTOFF | PEAK |
 | VCO 1/2 (ENV) | NOISE | RANGE | | |
 | VCF VCA 2/2 (ENV) | CUTOFF | PEAK | LEVEL | EG |
 | LFO (LFO) | RATE | INT | TARGET | MODE |
@@ -93,15 +93,14 @@ Three controls do the same job on every page:
 | WAVE (SELECT) | The oscillator: saw, triangle or square. |
 | CUTOFF | The filter's cutoff, from about 80 Hz to about 18 kHz. |
 | PEAK | The filter's resonance. Near the top, the filter whistles on its own at the cutoff while a note plays. |
-| LEVEL | The synth's volume (on HOME 1/2 and VCF VCA 2/2). |
+| LEVEL | The synth's volume. |
 | EG | The envelope. DECAY jumps to full when a note starts and dies away over about 1.3 seconds, even while you hold the key. GATE stays full while you hold it. ATTACK rises over about 1.3 seconds while you hold it. All three close quickly when you let go. |
 | RATE | The LFO's speed: about 1 Hz to 5 kHz in FAST, 0.05 Hz to 18 Hz in SLOW and 1 SHOT. |
 | INT | How much the LFO moves the pitch or the filter, from none at 0. At the top, the pitch swings an octave either way and the cutoff three octaves. |
 | TARGET | What the LFO moves: VCO (the pitch), VCO+VCF (both) or VCF (the cutoff). |
 | MODE | FAST and SLOW run all the time. FAST and 1 SHOT start again with each new note. 1 SHOT plays half a cycle when a note starts and then stops, like a second envelope. |
 | WAVE (ALGO) | The LFO: saw (falling), triangle, square, or S&H, a new random level each cycle. |
-| RHYTHM | The drums' volume, all three together. |
-| BD LEVEL · SN LEVEL · HH LEVEL | Each drum's own volume, under RHYTHM. 100 is the monotribe's balance between them; 127 is about 2 dB louder, 0 silent. The monotribe has no such controls; they're FMtribe's own. |
+| RHYTHM | The drums' volume. |
 | BD DECAY · SN DECAY · HH DECAY | Each drum's decay, as the popular hardware decay mods give it. 32 is the stock decay; lower is shorter, higher is up to about 15 times as long. |
 | SYNTH CH | The MIDI channel the synth plays on and the keys send on, 1 to 16 (1 at first). |
 | DRUM CH | The MIDI channel the drums play on and send on, 1 to 16 (10 at first). |

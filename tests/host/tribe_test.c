@@ -115,7 +115,7 @@ static double filter_gain(float cut01, float peak01, double hz)
 int main(int argc, char **argv)
 {
     tribe_params_t p = {.cutoff = 0.6f, .level = 1.0f, .rhythm = 1.0f, .wave = TRIBE_SAW, .eg = TRIBE_DECAY,
-                        .decay = {1.0f, 1.0f, 1.0f}, .drum_lvl = {1.0f, 1.0f, 1.0f}};
+                        .decay = {1.0f, 1.0f, 1.0f}};
     int i, n;
     double f, g1, g2;
     wav_dir = argc > 1 ? argv[1] : 0;
@@ -272,20 +272,6 @@ int main(int argc, char **argv)
             CHECK(fabs(0.1 / log(a1 / a2) * 1000 - 110) < 12, "BD DECAY x2: tau %.0f ms (110)", 0.1 / log(a1 / a2) * 1000);
             p.decay[0] = 1.0f;
         }
-        {                                        /* a drum's own level: SN at half, 6 dB down; BD untouched */
-            double a1, a2;
-            reset(&p);
-            tribe_drum(TRIBE_SN);
-            render(buf, 4410);
-            a1 = rms(buf, 4410);
-            p.drum_lvl[1] = 0.5f;
-            reset(&p);
-            tribe_drum(TRIBE_SN);
-            render(buf, 4410);
-            a2 = rms(buf, 4410);
-            CHECK(fabs(20 * log10(a1 / a2) - 6.02) < 0.5, "SN LEVEL x0.5: %.2f dB down (6.02)", 20 * log10(a1 / a2));
-            p.drum_lvl[1] = 1.0f;
-        }
         printf("       RMS 0-100 ms: BD %.1f, SN %.1f, HH %.1f dBFS\n", r[0], r[1], r[2]);
         CHECK(fabs(r[0] - r[1] - 7) < 1.5, "SN %.1f dB under BD (EST 7)", r[0] - r[1]);
         CHECK(fabs(r[0] - r[2] - 21) < 1.5, "HH %.1f dB under BD (EST 21)", r[0] - r[2]);
@@ -304,7 +290,6 @@ int main(int argc, char **argv)
         /* the LFO itself: a triangle at FAST, its period counted from its own output */
         memset(&p, 0, sizeof p);
         p.decay[0] = p.decay[1] = p.decay[2] = 1.0f;
-        p.drum_lvl[0] = p.drum_lvl[1] = p.drum_lvl[2] = 1.0f;
         p.cutoff = 0.6f; p.level = 1.0f; p.eg = TRIBE_GATE; p.lfo_mode = TRIBE_LFO_FAST; p.lfo_wave = TRIBE_LFO_TRI;
         p.lfo_rate = 0.5f;
         reset(&p);

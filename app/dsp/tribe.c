@@ -17,7 +17,7 @@
 
 /* ------------------------------------------------------------ the settings --- */
 static tribe_params_t par = {.cutoff = 0.6f, .peak = 0.3f, .level = 0.8f, .rhythm = 0.7f, .lfo_rate = 0.5f,
-                             .decay = {1.0f, 1.0f, 1.0f}, .drum_lvl = {1.0f, 1.0f, 1.0f}};
+                             .decay = {1.0f, 1.0f, 1.0f}};
 static volatile uint32_t par_seq;               /* bumped by tribe_set: the render copies at a block's start */
 static tribe_params_t live;                     /* the render's copy */
 static uint32_t live_seq;
@@ -249,14 +249,14 @@ static inline void ping_hit(ping_t *p)
 static inline float drums(void)
 {
     float s, n, v, hp;
-    s = BD_GAIN * live.drum_lvl[0] * ping(&bd, BD_HZ, k_bd, r_bd);
-    s += SN_TONE * live.drum_lvl[1] * ping(&sn, SN_HZ, k_sn, r_sn);
+    s = BD_GAIN * ping(&bd, BD_HZ, k_bd, r_bd);
+    s += SN_TONE * ping(&sn, SN_HZ, k_sn, r_sn);
     if (sn_namp > 1e-5f || hh_amp > 1e-5f) {
         n = white();
         v = (n - sn_hp) * hp_sn_g;              /* SN noise: a one-pole high-pass (TPT) */
         hp = n - (v + sn_hp);
         sn_hp += v + v;
-        s += SN_NOISE * live.drum_lvl[1] * sn_namp * hp;
+        s += SN_NOISE * sn_namp * hp;
         sn_namp *= k_snn;
         /* HH: a TPT state-variable filter's high-pass, 4 kHz, Q 0.707 */
         hp = (n - (hh_r + hh_g) * hh_s1 - hh_s2) / (1.0f + hh_r * hh_g + hh_g * hh_g);   /* hh_r: 2R */
@@ -267,7 +267,7 @@ static inline float drums(void)
             v = hh_g * bp;
             hh_s2 = hh_s2 + v + v;
         }
-        s += HH_GAIN * live.drum_lvl[2] * hh_amp * hp;
+        s += HH_GAIN * hh_amp * hp;
         hh_amp *= k_hh;
     }
     return s;
@@ -439,8 +439,6 @@ void tribe_set(const tribe_params_t *p)
         int d;
         for (d = 0; d < 3; d++)
             par.decay[d] = fm_clampf(par.decay[d], 0.25f, 16.0f);
-        for (d = 0; d < 3; d++)
-            par.drum_lvl[d] = fm_clampf(par.drum_lvl[d], 0.0f, 1.5f);
     }
     par_seq++;
 }

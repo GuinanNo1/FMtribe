@@ -38,12 +38,12 @@ VCO → Korg35 ZDF filter → EGs → LFO → drums → sequencer. Add a host un
 each, as GIO-1's `tests/host/` does.
 
 Done (0.2): `app/dsp/tribe.c` — PolyBLEP/BLAMP VCO and the Korg35 (Pirkle AN-5) run 2x oversampled with a 35-tap
-halfband; Decay/Gate/Attack EGs; BD/SN/HH (each with its own level, drum_lvl, 1 = stock mix; FMtribe's addition). `tests/host/tribe_test.c` checks each against the estimates above (and
+halfband; Decay/Gate/Attack EGs; BD/SN/HH. `tests/host/tribe_test.c` checks each against the estimates above (and
 writes WAVs); `app/tests/sound.txt` covers the panel and MIDI map. Constants marked GUESS in tribe.c (Gate/Attack,
 release ~12 ms, SN tone/noise balance) wait for the prototype comparison. Known gap: self-oscillation level rises
 ~2.5 dB from 80 Hz to 18 kHz; the recordings suggest it falls ~6 dB from 200 Hz to 3.5 kHz.
-UI (0.4): pages on buttons (app.c PAGE[]), HOME first (the start page: LEVELS 1/2 = LEVEL, BD/SN/HH LEVEL;
-TEMPO VCF 2/2 = TEMPO, CUTOFF, PEAK), then the monotribe's panel left to right: a button shows its first page,
+UI (0.4): pages on buttons (app.c PAGE[]), HOME first (the start page, 1/1: LEVEL, RHYTHM, CUTOFF, PEAK), then the monotribe's panel left to
+right: a button shows its first page,
 pressed again its next; K1–K4 edit the page; the header shows the page name (left, in place of the app name) and x/y (right). ENV VCO 1/2 (NOISE
 RANGE; RANGE WIDE/NARROW/KEY stored, only KEY plays yet) and VCF VCA 2/2 (CUTOFF PEAK LEVEL EG); LFO (RATE INT TARGET
 MODE); ARP DRUMS (RHYTHM, BD/SN/HH DECAY; F#-G#-A# black keys are pads); SEQ STEP 1/2 (TEMPO SWING STEPS GATE) and
@@ -51,7 +51,8 @@ EDIT 2/2 (STEP NOTE GATE ON, piano roll); GLO MIDI 1/3 (SYNTH CH DRUM CH SYNC CL
 LIGHT, GLOW), DEVICES 3/3 (K1 picks, SAVE connects/lets go; scans while the page is up). Constant everywhere: OCT-/+
 the octave; SELECT the VCO WAVE (on SEQ pages the step cursor ed_slot); ALGO the LFO WAVE on LFO; PRESET the part on SEQ
 pages (part_pick; also the black part keys on STEP). EDIT edits the picked part: synth piano roll, or a drum's 16
-slots (cursor by slot, K4 ON its hits, NOTE/GATE '-'). SEL, EDIT, FX free (the user will assign SEL later). Settings are PAR[] (knob 0..127 or switch), saved as "FMT8" with
+slots (cursor by slot, K4 ON its hits, NOTE/GATE '-'). SEL, EDIT free (the user will assign SEL later); FX
+planned as the drum rolls button. Keep to the monotribe's controls (no per-drum levels: RHYTHM only). Settings are PAR[] (knob 0..127 or switch), saved as "FMT7" with
 the pattern. pget/pset reach pattern-backed settings (STEPS, EDIT's STEP/NOTE/GATE/ON) and the BLE device pick (NSAVED).
 Sequencer (0.3, UI 0.4): app/seq/seq.c (o2), tests/host/seq_test.c, app/tests/seq.txt. 8 steps x 2 slots, parts
 SYNTH/BD/SN/HH, per-part active steps, gate per synth slot (127 tie), 16-step synth, swing, 96 ppqn ticks in the
