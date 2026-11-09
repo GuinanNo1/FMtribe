@@ -1104,14 +1104,12 @@ static void draw(void)
         int32_t x = cv_text(10, 6, &FONT_B, ui.msg[0], C_WHITE);
         cv_text(x + 8, 6, &FONT_B, ui.msg[1], C_HI);
     } else {
-        int32_t x = cv_text(10, 6, &FONT_B, APP_NAME, C_WHITE);
+        int32_t x = cv_text(10, 6, &FONT_B, PAGE[ui.page].name, C_WHITE);   /* the page, where the name was */
         if (FM1B_BLE)                        /* Bluetooth: grey while it waits, lit while a computer is connected */
             x = cv_text(x + 8, 10, &FONT_XS, "BLE", plat_ble_connected() ? C_HI : C_DIM);
         if (FM1B_BLE_CENTRAL)                /* a Bluetooth MIDI device: lit while connected */
             cv_text(x + 6, 10, &FONT_XS, "DEV", plat_ble_device() == BLE_DEV_READY ? C_HI : C_DIM);
-        if (note < 0) {                      /* the page's name, beside its place on its button */
-            cv_text(196 - text_w(&FONT_XS, PAGE[ui.page].name), 10, &FONT_XS, PAGE[ui.page].name, C_GRAY);
-        } else {                             /* the note, and the last key's velocity and pressure */
+        if (note >= 0) {                     /* the note, and the last key's velocity and pressure */
             int32_t x;
             note_name(note, t);
             x = 196 - text_w(&FONT_B, t);

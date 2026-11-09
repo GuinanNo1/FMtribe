@@ -21,8 +21,8 @@ To go back to M-VAVE's firmware, or to another one, open the same installer and 
 
 ## 3. Play
 
-Press a page button, then turn K1 to K4 to edit that page. Press the button again for its next page; the top right of
-the screen shows which one, such as VCF VCA 2/2.
+Press a page button, then turn K1 to K4 to edit that page. Press the button again for its next page; the header
+shows which one, such as VCF VCA 2/2.
 
 | Page (button) | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |

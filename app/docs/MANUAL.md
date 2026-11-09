@@ -46,7 +46,7 @@ can recover an FM-1 that doesn't start, too. For details, see felucca-bsp's `too
 
 | Part | What it shows |
 | --- | --- |
-| Header | The name, and BLE, which lights while a computer or tablet is connected over Bluetooth. At the right, the page's name and which page of its button you're on, such as VCF VCA 2/2. While you play a key, the note instead. After a change, a message shows here for a moment, such as CUTOFF 100. |
+| Header | The page you're on, such as VCF VCA, and BLE and DEV, which light while a computer or a Bluetooth MIDI device is connected. At the right, which page of its button it is, such as 2/2, and while you play a key, the note. After a change, a message shows here for a moment, such as CUTOFF 100. |
 | Tabs | The pages' buttons: VCO (ENV), LFO, DRUM (ARP), SEQ and GLO. The one you're on is lit, and so is its button. |
 | K1 to K4 | What the four knobs do on this page. A knob shows a bar and its value; a switch shows its position. Each lights for a moment as you turn it. |
 | Below the knobs | On the synth pages, the VCO's WAVE (SELECT) and, on LFO, the LFO's WAVE (ALGO). On DRUMS, the pads. On STEP, the pattern, a row a part. On EDIT, the synth's steps as a piano roll. |

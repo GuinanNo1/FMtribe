@@ -43,7 +43,7 @@ writes WAVs); `app/tests/sound.txt` covers the panel and MIDI map. Constants mar
 release ~12 ms, SN tone/noise balance) wait for the prototype comparison. Known gap: self-oscillation level rises
 ~2.5 dB from 80 Hz to 18 kHz; the recordings suggest it falls ~6 dB from 200 Hz to 3.5 kHz.
 UI (0.4): pages on buttons (app.c PAGE[]), after the monotribe's panel left to right: a button shows its first page,
-pressed again its next; K1–K4 edit the page; the header's right shows the page name and x/y. ENV VCO 1/2 (NOISE
+pressed again its next; K1–K4 edit the page; the header shows the page name (left, in place of the app name) and x/y (right). ENV VCO 1/2 (NOISE
 RANGE; RANGE WIDE/NARROW/KEY stored, only KEY plays yet) and VCF VCA 2/2 (CUTOFF PEAK LEVEL EG); LFO (RATE INT TARGET
 MODE); ARP DRUMS (RHYTHM, BD/SN/HH DECAY; F#-G#-A# black keys are pads); SEQ STEP 1/2 (TEMPO SWING STEPS GATE) and
 EDIT 2/2 (STEP NOTE GATE ON, piano roll); GLO MIDI 1/3 (SYNTH CH DRUM CH SYNC CLOCK OUT), GLOBAL 2/3 (BLE MIDI, KEY
