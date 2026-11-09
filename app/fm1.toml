@@ -1,0 +1,24 @@
+# FMtribe's build settings (fm1-base's tools/build.py: ./build.sh)
+name = "FMTRIBE"               # the build's files: fmtribe.fwsc, fmtribe-X.Y.fwsc; APP_NAME is in app.h
+id_prefix = "FM-1_59"          # package identity: dev FM-1_5900, releases FM-1_59XXYYZZ (GIO-1 is FM-1_58)
+usb_manufacturer = "FMtribe"
+usb_product = "FMtribe FM-1"
+o2 = []                        # the DSP's units, compiled at -O2, once they exist (e.g. "dsp/voice.c")
+words = "words.tsv"
+# Bluetooth MIDI (fm1-base's JieLi stack; ./build.sh --no-ble is the USB-only fallback build)
+ble = true
+ble_central = true             # the FM-1 connects to Bluetooth MIDI keyboards too (~8 KB flash; may go if RAM is short)
+# wifi stays off: Bluetooth or Wi-Fi, not both
+usb_audio_in = true            # the FM-1's sound recordable over USB-C (named from the computer's side)
+# the site (tools/make_site.py, tools/publish_site.sh)
+tagline = "a monotribe-style analogue groove box for the FM-1, written from scratch"
+repo = "https://github.com/GuinanNo1/FMtribe"
+licence = "MPL-2.0"
+credits = "Built on fm1-base by Charles Vestal and felucca-bsp, from Felucca by Leo Kuroshita (Hügelton Instruments). Not affiliated with Korg."
+# firmware.json, for firmware hubs (base/docs/FIRMWARE-JSON.md): the build writes it from these and the keys above
+author = "Ian Guinan"
+description = "A clean-room recreation of the sound and controls of a classic monophonic analogue groove box: one VCO, a two-pole MS-style filter, an LFO, three analogue-style drums and an eight-step sequencer. In development."
+tags = ["synth", "groovebox", "sequencer", "drum-machine"]
+install = "https://guinanno1.github.io/FMtribe/install/"
+site = "https://guinanno1.github.io/FMtribe/"
+screenshot = "app/docs/img/screen-playing.png"

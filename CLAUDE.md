@@ -1,0 +1,38 @@
+# FMtribe — notes for coding sessions
+
+Open-source (MPL-2.0) firmware for the M-VAVE FM-1 that recreates the Korg monotribe's sound and interface.
+App in `app/`, fm1-base in `base/` (submodule, pinned at b0976f2). Build: `./build.sh --host`; test:
+`sh tests/run_tests.sh`. See BUILDING.md.
+
+## Clean-room rules (do not break)
+- Do not read, port, translate or paraphrase Clonotribe's source (GPL-3.0), and do not use its audio as a reference.
+- Do not decode, disassemble or read Korg's monotribe firmware.
+- Write DSP from: the research doc ("Korg monotribe — emulation research for FM-1",
+  https://claude.ai/artifact/Hfd18xumo1hYLJgNnDKKBd), Pirkle's Korg35 paper, Zavalishin's *The Art of VA Filter
+  Design*, Korg's public manuals, and the estimates below.
+- No samples; everything synthesised.
+
+## Platform constraints
+- `float` DSP only: no `double` (the build rejects it). Use `fastmath.h` (`fm_sinf`, `fm_exp2f`, ...).
+- RAM is the constraint: ~22 KB free after template + BLE + BLE devices; ~370 KB flash. Check the build's report.
+- DSP units go in `app/` subdirs listed in `app/fm1.toml` `include`/`o2` (as GIO-1's `dsp/gio.c`).
+- Audio: 44.1 kHz, `APP_BLOCK` 256 frames, `app_render` in the audio interrupt. A second core is available if needed.
+- fm1-base is beta; move the pin deliberately (BUILDING.md). Keep `./build.sh --no-ble` working.
+- Package identity `FM-1_59` (GIO-1 is `FM-1_58`).
+
+## MIDI defaults (stock monotribe map)
+Channel 1 synth; channel 10 drums on notes 36 (BD), 40 (SN), 42 (HH); CCs 1, 16, 80–83, 7, 11.
+
+## Estimates from public recordings (see research doc for evidence and confidence)
+- VCF: 2-pole (12 dB/oct) Korg35-style, ZDF; self-oscillates cleanly ~83 Hz to >15 kHz; cutoff taper ~exponential.
+- Decay EG (VCA): a = (exp(−t/τ) − c)/(1 − c), τ ≈ 365–395 ms, c ≈ 0.03–0.05, silent ~1.2–1.3 s; pitch-independent.
+- BD: damped sine 43–45 Hz, no pitch sweep, ~2 ms trigger step, τ 53–56 ms.
+- SN: damped ~244 Hz tone (τ ~9 ms) + broadband noise (−20 dB at 25–45 ms).
+- HH: high-passed noise (~−11 dB/oct below ~5 kHz), −20 dB at 32–41 ms.
+- Drum mix at one setting: SN ~7 dB, HH ~21 dB below BD.
+- Unknown (leave for the prototype comparison): Attack and Gate EG times, gate/release, LFO ranges, ribbon span,
+  VCO waveform shapes, VCA click, drum mix at RHYTHM max.
+
+## Implementation order
+VCO → Korg35 ZDF filter → EGs → LFO → drums → sequencer. Add a host unit test and a render-to-WAV scenario for
+each, as GIO-1's `tests/host/` does.
