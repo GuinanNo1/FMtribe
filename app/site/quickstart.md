@@ -27,7 +27,7 @@ shows which one, such as VCF VCA 2/2. FMtribe starts on HOME.
 | Page (button) | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
 | HOME 1/2 (HOME) | LEVEL | RHYTHM | CUTOFF | PEAK |
-| RANGE MOTION 2/2 (HOME) | RANGE | MOTION | | |
+| DECAY MOTION 2/2 (HOME) | BD DECAY | SN DECAY | HH DECAY | MOTION |
 | VCO 1/2 (ENV) | NOISE | RANGE | | |
 | VCF VCA 2/2 (ENV) | CUTOFF | PEAK | LEVEL | EG |
 | LFO (LFO) | RATE | INT | TARGET | MODE |

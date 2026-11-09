@@ -296,20 +296,28 @@ tap PLAY
 wait 30
 expect vol0 0
 expect vol4 0
-# HOME 2/2, RANGE MOTION: MOTION off and on; RANGE KEY, NARROW, WIDE (a fast, a slow glide)
+# HOME 2/2, DECAY MOTION: the drums' decays (the hardware mod), MOTION off and on
 tap HOME
 tap HOME
 wait 30
 expect page 1
-turn K2 -1
+turn K4 -1
 expect motion 0
-turn K2 1
+turn K4 1
 expect motion 1
-turn K1 -1
+turn K2 8
+expect sn_dec 40
+turn K2 -8
+expect sn_dec 32
+# RANGE (on VCO 1/2): KEY, NARROW, WIDE (a fast, a slow glide)
+tap ENV
+wait 30
+expect page 2
+turn K2 -1
 expect range 1
-turn K1 -1
+turn K2 -1
 expect range 0
-turn K1 2
+turn K2 2
 expect range 2
 # LEVEL turned while it records: MOTION VOLUME
 tap HOME
