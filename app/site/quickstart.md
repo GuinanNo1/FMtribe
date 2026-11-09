@@ -36,8 +36,8 @@ shows which one, such as VCF VCA 2/2.
 | GLOBAL 2/3 (GLO) | BLE MIDI | KEY LIGHT | GLOW | |
 | DEVICES 3/3 (GLO) | DEVICE | | | |
 
-On every page, OCT− and OCT+ set the octave and SELECT the VCO's wave (on SEQ, it moves the step cursor). On LFO,
-ALGO sets the LFO's wave.
+On every page, OCT− and OCT+ set the octave and SELECT the VCO's wave. On the SEQ pages, SELECT moves the step cursor
+and PRESET picks the part (SYNTH, BD, SN, HH). On LFO, ALGO sets the LFO's wave.
 
 | Do this | And |
 | --- | --- |

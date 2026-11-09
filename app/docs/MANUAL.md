@@ -80,6 +80,7 @@ Three controls do the same job on every page:
 | OCT− · OCT+ | The octave, in six steps from −3 to +2, as the monotribe's six octave positions. |
 | SELECT | The VCO's WAVE: saw, triangle or square. On the SEQ pages, it moves the step cursor instead. |
 | ALGO | On the LFO page, the LFO's WAVE: saw, triangle, square or S&H. |
+| PRESET | On the SEQ pages, the part you're editing: SYNTH, BD, SN or HH. |
 
 ![The VCO page, ENV 1/2](img/screen-vco.png "The VCO page") ![The LFO page](img/screen-lfo.png "The LFO page")
 
@@ -114,7 +115,7 @@ Three controls do the same job on every page:
 | MASTER | Sets the volume. |
 | SAVE | Saves every setting, the octave and the pattern. SAVE lights while there's something to save. On the DEVICES page, SAVE connects to a Bluetooth MIDI device instead. |
 | PLAY · REC | Start and stop the sequencer; record into it. See The sequencer. |
-| SEL · EDIT · HOME · FX | Show their names, and do nothing else yet. |
+| SEL · EDIT · HOME · FX | Show their names, and do nothing else yet. PRESET does nothing off the SEQ pages. |
 
 ### The drums
 
@@ -142,7 +143,7 @@ lights are the step LEDs. The black keys are the buttons beside them.
 | White keys F3 to F4 (the first eight) | Steps 1–8 | Switch the part's step on or off. A synth step switched on takes the last note you played. |
 | White keys G4 to G5 (the next eight) | Steps 9–16 | With 16-STEP SYNTH, the synth's steps 9 to 16. |
 | F♯3 · G♯3 · A♯3 | BD · SN · HH | Pick the part, and play its drum. Hold one and press a step for a hit half-way through that step. |
-| C♯4 | SYNTH | Pick the synth part. |
+| C♯4 | SYNTH | Pick the synth part. PRESET picks the part too. |
 | D♯4 | ACTIVE STEP | Hold it and press steps to switch them on or off for playback. One step always stays on. |
 | F♯4 | GATE TIME | Hold it and touch the white keys to set gate times; stopped, it's the multi-function key. See Setting gate times. |
 
@@ -180,16 +181,19 @@ When the sequencer is stopped, hold GATE TIME (F♯4) and press a step key, as o
 
 ![EDIT: the synth's steps as a piano roll, the cursor on step 1](img/screen-edit.png "The EDIT page")
 
-EDIT (SEQ, 2/2) sets the synth's steps exactly, which the monotribe can only do by playing them in. The screen shows
-the synth's steps as a piano roll: each note at its pitch, as long as its gate. The box is the step cursor.
+EDIT (SEQ, 2/2) sets one part's steps exactly, which the monotribe can only do by playing them in. Turn PRESET to
+pick the part; its name shows above the steps. For the synth, the screen shows a piano roll: each note at its pitch,
+as long as its gate. For a drum, it shows all 16 of its slots, each step and its half, with a block for each hit.
+The box is the step cursor.
 
 | Control | What it does |
 | --- | --- |
-| SELECT or K1 STEP | Moves the cursor a step at a time (a half-step with 16-STEP SYNTH). |
-| Keys | Play a note to put it in the cursor's step and switch that step on. The cursor moves on to the next step, so you can type in a melody. |
-| K2 NOTE | The step's note, a semitone a click. |
-| K3 GATE | The step's gate time, from 1.4 % of the step to 100 %, then TIE. |
-| K4 ON | Whether the step plays. |
+| PRESET | The part: SYNTH, BD, SN or HH. |
+| SELECT or K1 STEP | Moves the cursor a step at a time (a half-step with 16-STEP SYNTH, and always for a drum: 3+ is half-way through step 3). |
+| Keys | For the synth, play a note to put it in the cursor's step and switch that step on. The cursor moves on to the next step, so you can type in a melody. For a drum, the keys just play the synth. |
+| K2 NOTE | The synth step's note, a semitone a click. A drum shows -. |
+| K3 GATE | The synth step's gate time, from 1.4 % of the step to 100 %, then TIE. A drum shows -. |
+| K4 ON | Whether the step plays: for a drum, whether it hits. |
 
 #### Recording
 

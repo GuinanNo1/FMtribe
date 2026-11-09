@@ -48,8 +48,9 @@ RANGE; RANGE WIDE/NARROW/KEY stored, only KEY plays yet) and VCF VCA 2/2 (CUTOFF
 MODE); ARP DRUMS (RHYTHM, BD/SN/HH DECAY; F#-G#-A# black keys are pads); SEQ STEP 1/2 (TEMPO SWING STEPS GATE) and
 EDIT 2/2 (STEP NOTE GATE ON, piano roll); GLO MIDI 1/3 (SYNTH CH DRUM CH SYNC CLOCK OUT), GLOBAL 2/3 (BLE MIDI, KEY
 LIGHT, GLOW), DEVICES 3/3 (K1 picks, SAVE connects/lets go; scans while the page is up). Constant everywhere: OCT-/+
-the octave; SELECT the VCO WAVE (on SEQ pages the step cursor ed_slot); ALGO the LFO WAVE on LFO. SEL, EDIT, HOME,
-FX, PRESET free (the user will assign SEL later). Settings are PAR[] (knob 0..127 or switch), saved as "FMT7" with
+the octave; SELECT the VCO WAVE (on SEQ pages the step cursor ed_slot); ALGO the LFO WAVE on LFO; PRESET the part on SEQ
+pages (part_pick; also the black part keys on STEP). EDIT edits the picked part: synth piano roll, or a drum's 16
+slots (cursor by slot, K4 ON its hits, NOTE/GATE '-'). SEL, EDIT, HOME, FX free (the user will assign SEL later). Settings are PAR[] (knob 0..127 or switch), saved as "FMT7" with
 the pattern. pget/pset reach pattern-backed settings (STEPS, EDIT's STEP/NOTE/GATE/ON) and the BLE device pick (NSAVED).
 Sequencer (0.3, UI 0.4): app/seq/seq.c (o2), tests/host/seq_test.c, app/tests/seq.txt. 8 steps x 2 slots, parts
 SYNTH/BD/SN/HH, per-part active steps, gate per synth slot (127 tie), 16-step synth, swing, 96 ppqn ticks in the

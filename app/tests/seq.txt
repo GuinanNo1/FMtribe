@@ -207,6 +207,33 @@ expect edstep 2
 turn K4 -1
 expect on0 17
 shot seq_edit.png
+# PRESET picks the part on the SEQ pages: on EDIT, the BD's 16 slots (half-steps too), ON its hits; no note or gate
+turn PRESET 1
+wait 30
+expect part 1
+expect edstep 2
+turn SELECT 1
+expect edstep 3
+turn K4 1
+expect on1 4377
+shot seq_edit_bd.png
+turn K4 -1
+expect on1 4369
+turn K2 5
+expect note3 60
+turn PRESET -1
+wait 30
+expect part 0
+expect edstep 2
+# and on STEP
+tap SEQ
+wait 30
+turn PRESET 3
+expect part 3
+turn PRESET -3
+expect part 0
+tap SEQ
+wait 30
 # GATE TIME while it plays: the keys a ribbon, left 1.4 %, right 100 %; let go, the pattern's gates again
 tap SEQ
 wait 30

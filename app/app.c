@@ -152,7 +152,7 @@ static int pget(int pn)
     case P_EDSTEP: return ed_slot;
     case P_EDNOTE: return set.pat.note[ed_slot];
     case P_EDGATE: return set.pat.gate[ed_slot];
-    case P_EDON: return set.pat.on[SEQ_SYNTH] >> ed_slot & 1u;
+    case P_EDON: return set.pat.on[set.v[P_PART]] >> ed_slot & 1u;   /* (the part picked: PRESET on SEQ) */
     case P_BLEDEV: return btdev_pick();
     }
     return 0;
@@ -166,13 +166,19 @@ static void pset(int pn, int v)
     switch (pn) {
     case P_STEPS16: set.pat.steps16 = (uint8_t)v; break;
     case P_EDSTEP: ed_slot = (uint8_t)v; break;
-    case P_EDNOTE: set.pat.note[ed_slot] = (uint8_t)v; break;
-    case P_EDGATE: set.pat.gate[ed_slot] = (uint8_t)v; break;
+    case P_EDNOTE:                       /* (a drum has no note or gate: nothing) */
+        if (set.v[P_PART] == SEQ_SYNTH)
+            set.pat.note[ed_slot] = (uint8_t)v;
+        break;
+    case P_EDGATE:
+        if (set.v[P_PART] == SEQ_SYNTH)
+            set.pat.gate[ed_slot] = (uint8_t)v;
+        break;
     case P_EDON:
         if (v)
-            set.pat.on[SEQ_SYNTH] |= (uint16_t)(1u << ed_slot);
+            set.pat.on[set.v[P_PART]] |= (uint16_t)(1u << ed_slot);
         else
-            set.pat.on[SEQ_SYNTH] &= (uint16_t)~(1u << ed_slot);
+            set.pat.on[set.v[P_PART]] &= (uint16_t)~(1u << ed_slot);
         break;
     case P_BLEDEV: btdev_choose(v); break;
     }
@@ -517,7 +523,9 @@ static void param_text(int p, char *t)   /* a setting's value as the screen show
 {
     int v = pget(p);
     t[0] = 0;
-    if (PAR[p].nopt)
+    if ((p == P_EDNOTE || p == P_EDGATE) && set.v[P_PART] != SEQ_SYNTH)
+        text_cat(t, "-");                    /* (a drum's step: a hit, no note or gate) */
+    else if (PAR[p].nopt)
         text_cat(t, PAR[p].opt[v]);
     else if (p == P_EDNOTE)
         note_name(v, t);
@@ -826,18 +834,27 @@ static void multi_function(int w)
     }
 }
 
+/* a part picked (PRESET on SEQ, or its black key on STEP): a drum's heard, as the monotribe's part buttons */
+static void part_pick(int i)
+{
+    if (i != (int)set.v[P_PART]) {
+        set.v[P_PART] = (uint16_t)i;
+        if (i == SEQ_SYNTH && !set.pat.steps16)
+            ed_slot &= (uint8_t)~1u;         /* (the synth's cursor on a step) */
+    }
+    if (i != SEQ_SYNTH)
+        drum(i - SEQ_BD);
+    app_say("PART", PART_OPT[i]);
+}
+
 /* STEP: a key of the step row */
 static void step_key(uint32_t k, int w, int32_t note)
 {
     int part = set.v[P_PART], i, sl;
     if (w < 0) {                             /* the black keys: a part (a drum's heard), ACTIVE STEP, GATE TIME */
         for (i = 0; i < SEQ_NPART; i++)
-            if (PART_KEY[i] == k) {
-                set.v[P_PART] = (uint16_t)i;
-                if (i != SEQ_SYNTH)
-                    drum(i - SEQ_BD);
-                app_say("PART", PART_OPT[i]);
-            }
+            if (PART_KEY[i] == k)
+                part_pick(i);
         if (k == KEY_ACTIVE)
             app_say("ACTIVE STEP", "HOLD, PICK STEPS");
         else if (k == KEY_GATE)
@@ -910,7 +927,7 @@ static void key_press(uint32_t k, int32_t note)
     if (ui.page == PG_DRUMS && w < 0 && !rec_armed)   /* (DRUMS: the other black keys nothing) */
         return;
     synth_key(k, note, touch_vel(k));
-    if (ui.page == PG_EDIT && !rec_armed) {  /* EDIT: the note into the step, and on to the next */
+    if (ui.page == PG_EDIT && !rec_armed && set.v[P_PART] == SEQ_SYNTH) {   /* EDIT: the note in, on to the next */
         set.pat.note[ed_slot] = (uint8_t)note;
         set.pat.on[SEQ_SYNTH] |= (uint16_t)(1u << ed_slot);
         set_dirty = 1;
@@ -920,10 +937,11 @@ static void key_press(uint32_t k, int32_t note)
 }
 
 /* the step cursor (SELECT on SEQ, K1 on EDIT): a step at a time (a slot in 16-step mode), round the 8 or 16 */
+static int cursor_half(void) { return set.v[P_PART] != SEQ_SYNTH || set.pat.steps16; }   /* (half-steps too) */
 static void cursor_step(int dir)
 {
-    int n = set.pat.steps16 ? 1 : 2;
-    ed_slot = (uint8_t)(((ed_slot & (set.pat.steps16 ? 15 : 14)) + n * dir + SEQ_SLOTS) % SEQ_SLOTS);
+    int n = cursor_half() ? 1 : 2;
+    ed_slot = (uint8_t)(((ed_slot & (cursor_half() ? 15 : 14)) + n * dir + SEQ_SLOTS) % SEQ_SLOTS);
     step_say("", ed_slot);
 }
 
@@ -1024,6 +1042,8 @@ static void input(void)
                 switch_turn(P_WAVE, e);
         } else if (k == EN_ALGO && ui.page == PG_LFO) {   /* ALGO: the LFO's WAVE on LFO */
             switch_turn(P_LWAVE, e);
+        } else if (k == EN_PRESET && PAGE[ui.page].button == B_SEQ) {   /* PRESET: the part, on SEQ */
+            part_pick(clamp(set.v[P_PART] + (e > 0 ? 1 : -1), 0, SEQ_NPART - 1));
         } else if (k == EN_K1 && PAGE[ui.page].p[0] == P_EDSTEP) {   /* EDIT: K1 moves the step cursor too */
             cursor_step(e > 0 ? 1 : -1);
         } else if (k >= EN_K1 && PAGE[ui.page].p[k - EN_K1] >= 0) {
@@ -1175,11 +1195,13 @@ static void draw(void)
         }
     }
     if (ui.page == PG_EDIT) {
-        /* the piano roll: the synth's steps (8, or 16), each note at its pitch and as long as its gate; an active
-         * step's floor marked, the cursor boxed, the playhead white */
-        int n = set.pat.steps16 ? 16 : 8, c, lo = 127, hi = 0, span, base, sp = seq_slot(SEQ_SYNTH);
+        /* the piano roll: the synth's steps (8, or 16), each note at its pitch and as long as its gate; a drum's 16
+         * slots (steps and their halves), each hit a block. An active step's floor marked, the cursor boxed, the
+         * playhead white; the part (PRESET) at the top left */
+        int part = set.v[P_PART], drm = part != SEQ_SYNTH, n = drm || set.pat.steps16 ? 16 : 8;
+        int c, lo = 127, hi = 0, span, base, sp = seq_slot(part);
         int32_t cw = 232 / n;
-        for (c = 0; c < n; c++) {
+        for (c = 0; c < n && !drm; c++) {
             int sl = set.pat.steps16 ? c : 2 * c;
             if (set.pat.on[SEQ_SYNTH] >> sl & 1u) {
                 lo = set.pat.note[sl] < lo ? set.pat.note[sl] : lo;
@@ -1191,22 +1213,30 @@ static void draw(void)
         span = hi - lo < 12 ? 12 : hi - lo;
         base = lo - (span - (hi - lo)) / 2;
         for (c = 0; c < n; c++) {
-            int sl = set.pat.steps16 ? c : 2 * c;
+            int sl = n == 16 ? c : 2 * c, now_on = sp >= 0 && (n == 16 ? sp : sp & ~1) == sl;
             int32_t x = 4 + (int32_t)c * cw;
-            if (set.pat.active[SEQ_SYNTH] >> (sl / 2) & 1u)
+            if (set.pat.active[part] >> (sl / 2) & 1u)
                 cv_rect(x, 139, cw - 2, 1, C_LINE);
-            if (set.pat.on[SEQ_SYNTH] >> sl & 1u) {
-                int g = set.pat.gate[sl];
-                int32_t y = 134 - (set.pat.note[sl] - base) * 36 / span;
-                int32_t w = g >= SEQ_GATE_TIE ? cw : (cw - 2) * (14 + 986 * g / 127) / 1000;
-                cv_rect(x, y, w < 2 ? 2 : w, 4, (sp >= 0 && (set.pat.steps16 ? sp : sp & ~1) == sl) ? C_WHITE : C_HI);
+            if (set.pat.on[part] >> sl & 1u) {
+                if (drm) {
+                    cv_rect(x, 118, cw - 2, 10, now_on ? C_WHITE : (sl & 1) ? C_AMB : C_HI);
+                } else {
+                    int g = set.pat.gate[sl];
+                    int32_t y = 134 - (set.pat.note[sl] - base) * 24 / span;
+                    int32_t w = g >= SEQ_GATE_TIE ? cw : (cw - 2) * (14 + 986 * g / 127) / 1000;
+                    cv_rect(x, y, w < 2 ? 2 : w, 4, now_on ? C_WHITE : C_HI);
+                }
             }
-            if (sl == (set.pat.steps16 ? ed_slot : ed_slot & ~1)) {   /* the cursor */
-                cv_rect(x - 1, 94, cw, 1, C_WHITE);
+            if (sl == (n == 16 ? ed_slot : ed_slot & ~1)) {   /* the cursor */
+                cv_rect(x - 1, 107, cw, 1, C_WHITE);
                 cv_rect(x - 1, 141, cw, 1, C_WHITE);
-                cv_rect(x - 1, 94, 1, 48, C_WHITE);
-                cv_rect(x + cw - 2, 94, 1, 48, C_WHITE);
+                cv_rect(x - 1, 107, 1, 35, C_WHITE);
+                cv_rect(x + cw - 2, 107, 1, 35, C_WHITE);
             }
+        }
+        {
+            int32_t x = cv_text(4, 95, &FONT_XS, PART_OPT[part], C_HI);
+            cv_text(x + 6, 95, &FONT_XS, "PRESET", C_DIM);
         }
     } else if (ui.page == PG_SEQ) {
         /* the pattern: a row a part (the part edited lit), 16 slots, the steps in pairs: a slot that plays filled,
