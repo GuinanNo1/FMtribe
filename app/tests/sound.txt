@@ -209,7 +209,7 @@ expect note -1
 # GLOBAL: the synth on channel 2, the drums on 11; then a note on 2 plays, on 1 doesn't
 tap GLO
 wait 30
-expect page 5
+expect page 8
 shot global.png
 turn K1 1
 expect synth_ch 1
@@ -247,7 +247,7 @@ turn K2 -1
 # GLOBAL 2/2: KEY LIGHT off, then held keys only; GLOW
 tap GLO
 wait 30
-expect page 6
+expect page 9
 shot global2.png
 turn K1 -2
 expect keylight 0
@@ -267,7 +267,7 @@ expect dim_keys 0
 tap GLO
 tap GLO
 wait 30
-expect page 6
+expect page 9
 turn K1 1
 expect keylight 2
 turn K2 1

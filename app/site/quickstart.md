@@ -1,7 +1,7 @@
 # Quickstart
 
-Get FMtribe onto your FM-1 and making sound in five minutes. This build has the synth voice, the LFO and the drums;
-the sequencer arrives next.
+Get FMtribe onto your FM-1 and making sound in five minutes. This build has the synth voice, the LFO, the drums and
+the step sequencer.
 
 ---
 
@@ -31,14 +31,24 @@ the screen shows which one, such as 1/2.
 | LFO 1/2 (LFO) | RATE | INT | TARGET | MODE |
 | LFO 2/2 (LFO) | WAVE | | | |
 | DRUMS (ARP) | RHYTHM | BD DECAY | SN DECAY | HH DECAY |
-| GLOBAL 1/2 (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
-| GLOBAL 2/2 (GLO) | KEY LIGHT | GLOW | | |
+| SEQ 1/3 (SEQ) | TEMPO | PART | GATE | SWING |
+| SEQ STEPS 2/3 (SEQ) | STEPS | SYNC | CLOCK OUT | PART |
+| SEQ EDIT 3/3 (SEQ) | STEP | NOTE | GATE | ON |
+| GLOBAL 1/3 (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
+| GLOBAL 2/3 (GLO) | KEY LIGHT | GLOW | | |
+| DEVICES 3/3 (GLO) | DEVICE | | | |
 
 | Do this | And |
 | --- | --- |
 | Play the keys | The synth sounds. Each new key starts its envelope again. |
 | On DRUMS (ARP), the F♯ G♯ A♯ black keys | Bass drum, snare, hi-hat. The white keys still play the synth. |
 | OCT− · OCT+ | Octave down or up. |
+| PLAY | Start or stop the pattern. |
+| REC, then PLAY | Record: the keys (and the DRUMS pads) land on the nearest step. |
+
+**A drum pattern in a minute:** press SEQ. Press F♯3 to pick the bass drum, and press white keys to switch its
+slots on: each white key is a step or the half of one, low to high. G♯3 picks the snare and A♯3 the hi-hat, C♯4
+the synth. Press PLAY.
 | Turn MASTER | Volume. |
 | SAVE | Keeps your settings for the next start (it lights when there's something to save). |
 
@@ -46,9 +56,9 @@ the screen shows which one, such as 1/2.
 
 - **USB-C:** the FM-1 is a MIDI device and a sound card. Record it from the input "FMtribe FM-1".
 - **Bluetooth MIDI:** on a Mac, open Audio MIDI Setup › Window › Show MIDI Studio, click the Bluetooth button, then
-  Connect next to FM-1. On an iPad or iPhone, connect from a music app's Bluetooth MIDI settings. Hold REC for a
-  second to switch Bluetooth off or on.
-- **A Bluetooth keyboard:** put it in pairing mode, press REC, turn ALGORITHM to pick it, press REC again.
+  Connect next to FM-1. On an iPad or iPhone, connect from a music app's Bluetooth MIDI settings. Switch Bluetooth
+  off or on with BLE MIDI on the GLOBAL page.
+- **A Bluetooth keyboard:** put it in pairing mode, press GLO until DEVICES 3/3 shows, turn K1 to pick it, press SAVE.
 - **Screen mirror:** open [the Mirror page](../mirror/) in Chrome or Edge with the FM-1 on USB, and press Connect.
   Press Control to play it from the page.
 

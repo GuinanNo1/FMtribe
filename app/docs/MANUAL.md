@@ -1,9 +1,10 @@
 # FMtribe
 
 FMtribe will recreate the sound and controls of a classic monophonic analogue groove box on the M-VAVE FM-1. This
-build has the synth voice, the LFO and the drums: one oscillator (saw, triangle or square) and noise into a
-two-pole MS-style low-pass filter that self-oscillates, a VCA with three fixed envelopes, an LFO on the pitch, the
-filter or both, and a bass drum, snare and hi-hat. The sequencer and the ribbon modes come next. The sound is fitted to recordings of real units, so treat
+build has the synth voice, the LFO, the drums and the step sequencer: one oscillator (saw, triangle or square) and
+noise into a two-pole MS-style low-pass filter that self-oscillates, a VCA with three fixed envelopes, an LFO on
+the pitch, the filter or both, a bass drum, snare and hi-hat, and an 8-step sequencer for all four parts. The
+ribbon modes, Flux recording and drum rolls come next. The sound is fitted to recordings of real units, so treat
 it as an estimate until it has been compared side by side with one.
 
 ![The FMtribe screen at rest](img/screen-ready.png "FMtribe at rest")
@@ -40,16 +41,16 @@ can recover an FM-1 that doesn't start, too. For details, see felucca-bsp's `too
 
 ## 2. The screen
 
-![The DRUMS page: RHYTHM and the three decays as bars, the hi-hat pad lit, the F#, G# and A# keys marked](img/screen-playing.png "The DRUMS page")
+![The SEQ page: TEMPO 120, PART SYNTH, GATE 64, SWING 50 %, and the pattern, a row a part](img/screen-playing.png "The SEQ page")
 
 | Part | What it shows |
 | --- | --- |
 | Header | The name, and BLE, which lights while a computer or tablet is connected over Bluetooth. While you play a key, it shows the note. After a change, a message shows here for a moment, such as CUTOFF 100. At the top right, which page of its button you're on, such as 1/2. |
-| Tabs | The pages' buttons: VCO VCF (SEL), EG VCA (ENV), LFO (LFO), DRUMS (ARP) and GLOBAL (GLO). The one you're on is lit, and so is its button. |
+| Tabs | The pages' buttons: VCF (SEL), EG (ENV), LFO, DRUM (ARP), SEQ and GLO. The one you're on is lit, and so is its button. |
 | K1 to K4 | What the four knobs do on this page. A knob shows a bar and a value from 0 to 127; a switch shows its position. Each lights for a moment as you turn it. |
-| Drums | The BD, SN and HH pads, with the black keys that play them on the DRUMS page. A pad lights as its drum plays. |
+| Drums | The BD, SN and HH pads, with the black keys that play them on the DRUMS page. A pad lights as its drum plays. On the SEQ pages, the pattern instead. |
 | Keys | The 27 keys, black above white. A held key fills up. |
-| Bottom line | The octave, the last MIDI message in, and the volume (MASTER). |
+| Bottom line | The octave, PLAY or STOP and the tempo (REC when armed), the last MIDI message in, and the volume (MASTER). |
 
 ---
 
@@ -65,8 +66,51 @@ page, if it has more than one. A switch moves one position for each click of the
 | LFO 1/2 (LFO) | RATE | INT | TARGET | MODE |
 | LFO 2/2 (LFO) | WAVE | | | |
 | DRUMS (ARP) | RHYTHM | BD DECAY | SN DECAY | HH DECAY |
-| GLOBAL 1/2 (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
-| GLOBAL 2/2 (GLO) | KEY LIGHT | GLOW | | |
+| SEQ 1/3 (SEQ) | TEMPO | PART | GATE | SWING |
+| SEQ STEPS 2/3 (SEQ) | STEPS | SYNC | CLOCK OUT | PART |
+| SEQ EDIT 3/3 (SEQ) | STEP | NOTE | GATE | ON |
+| GLOBAL 1/3 (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
+| GLOBAL 2/3 (GLO) | KEY LIGHT | GLOW | | |
+| DEVICES 3/3 (GLO) | DEVICE | | | |
+
+### The sequencer
+
+FMtribe plays one pattern of 8 steps, a 16th note each, for four parts: SYNTH, BD, SN and HH, as the monotribe
+does. Each step has a second slot half-way through it, for the drums' in-between hits and, with STEPS on 16, the
+synth's in-between notes. Each part has its own active steps, so a part with fewer steps cycles against the others.
+
+PLAY starts the pattern from step 1 and stops it. PLAY lights green while it plays, red while it records.
+
+On the SEQ pages the keys change job:
+
+| Page | White keys | Black keys |
+| --- | --- | --- |
+| SEQ 1/3 | The part's 16 slots, low to high: step 1, its half, step 2, its half... A key switches its slot on or off. A synth step switched on takes the last note you played on the keys. | F♯3, G♯3 and A♯3 pick BD, SN and HH (and play them), C♯4 picks SYNTH. |
+| SEQ STEPS 2/3 | The lowest eight: the part's active steps, on or off. One always stays on. | F♯3 clears everything, G♯3 the synth, A♯3 the drums; C♯4 turns every part's steps back on. |
+| SEQ EDIT 3/3 | Play a note to put it in the step shown (K1), which then moves on to the next step. | Play notes too. |
+
+With KEY LIGHT on GUIDE (GLOBAL 2/3), the keys show the pattern: on SEQ 1/3 a slot that plays is lit, an empty
+slot in an active step glows, and the step playing shows half-lit; on SEQ STEPS the active steps are lit. The
+screen shows the whole pattern, a row a part, with the playhead in white.
+
+To record, press REC (it lights), then PLAY. While REC is on, the keys play and record the synth on any page,
+landing on the nearest step (or half-step in 16-step mode), and how long you hold a note sets its gate time; on
+the DRUMS page the pads record the drums. Recording adds to the pattern; to start again, clear a part on SEQ
+STEPS. Press REC again to stop recording.
+
+| Setting | What it does |
+| --- | --- |
+| TEMPO | 10 to 600 BPM. |
+| PART | The part the keys and the active steps edit. |
+| GATE | The gate time a new synth step gets, from 1.4 % of the step to 100 % (TIE: the note runs into the next). |
+| SWING | Plays every second step later, from straight (50 %) to a triplet feel (67 %). |
+| STEPS | 8, or 16: the synth's half-steps play too. |
+| SYNC | INT runs at TEMPO; MIDI follows MIDI clock, start and stop from a computer or another instrument. |
+| CLOCK OUT | Sends MIDI clock, start and stop, so other gear follows FMtribe. |
+| STEP · NOTE · GATE · ON | SEQ EDIT: pick a step (or half-step) of the synth, and set its note, gate time and whether it plays. |
+
+The pattern is kept with the settings when you press SAVE.
+
 
 On the DRUMS page, the black keys in the two F♯–G♯–A♯ groups play the bass drum, snare and hi-hat, and glow to
 show it (KEY LIGHT on GUIDE). The white keys still play the synth, so you can play both. The other black keys do
@@ -89,7 +133,8 @@ nothing there.
 | WAVE (LFO) | Saw (falling), triangle, square, or S&H, a new random level each cycle. |
 | SYNTH CH | The MIDI channel the synth plays on and the keys send on, 1 to 16 (1 at first). |
 | DRUM CH | The MIDI channel the drums play on and send on, 1 to 16 (10 at first). |
-| BLE MIDI | Bluetooth MIDI on or off. Holding REC for a second does the same. |
+| BLE MIDI | Bluetooth MIDI on or off. |
+| DEVICE | On DEVICES, the Bluetooth MIDI device to connect to: see MIDI and audio. |
 | KEY LIGHT | The keys' lights: OFF; HELD, the keys you hold; or GUIDE, those and, dimly, the keys that do something special on the page you're on, such as the drum pads. |
 | GLOW | How brightly the unlit buttons and the guide keys glow: OFF, LOW or HIGH. |
 
@@ -98,9 +143,9 @@ nothing there.
 | Keys | Play the synth. The last key you pressed sounds, and each new key starts the envelope again, as the monotribe's ribbon does. Let go of it while holding another, and the pitch goes back to the one still held. The volume doesn't follow how hard you play, as on the monotribe. Each key also sends its note on the synth's channel. |
 | OCT− · OCT+ | Set the octave, in six steps from −3 to +2, as the monotribe's six octave positions. |
 | MASTER | Sets the volume. |
-| SAVE | Saves every setting and the octave. SAVE lights while there's something to save. |
-| REC | Press it to find and connect a Bluetooth MIDI device. Hold it for a second to switch Bluetooth off or on. For details, see MIDI and audio. |
-| SEQ · PLAY · EDIT · HOME · FX | Show their names, and do nothing else yet. SEQ will hold the step sequencer's pages. |
+| SAVE | Saves every setting, the octave and the pattern. SAVE lights while there's something to save. On the DEVICES page, SAVE connects to a Bluetooth MIDI device instead. |
+| PLAY · REC | Start and stop the sequencer; record into it. See The sequencer. |
+| EDIT · HOME · FX | Show their names, and do nothing else yet. |
 
 ---
 
@@ -130,22 +175,24 @@ page; at first the synth is on 1 and the drums on 10.
 | CC 82 | LFO MODE: 32 FAST, 64 SLOW, 96 1 SHOT. |
 | CC 83 | LFO WAVE: 32 saw, 64 triangle, 96 square, 127 S&H. |
 | CC 7 | LEVEL. |
+| Clock, start, stop | With SYNC on MIDI (SEQ STEPS), the sequencer follows them. |
 
-The CCs are read on the synth's channel. The keys send notes, with their velocity and poly aftertouch, out over USB
+The CCs are read on the synth's channel. The sequencer sends its notes out too, on the same channels, and MIDI
+clock, start and stop with CLOCK OUT on. The keys send notes, with their velocity and poly aftertouch, out over USB
 and Bluetooth on the synth's channel, and the drum pads send theirs on the drums' channel.
 
 Over Bluetooth, FMtribe shows up as "FM-1". On a Mac, open Audio MIDI Setup, choose Window > Show MIDI Studio,
 click the Bluetooth button, then click Connect next to FM-1. On an iPad or iPhone, connect from a music app's
 Bluetooth MIDI settings.
 
-To switch Bluetooth off, hold REC for a second. The screen says BLUETOOTH OFF, and the FM-1 stops advertising and
-drops any connection. Hold REC again to switch it back on. To keep your choice for the next time the FM-1 starts,
-press SAVE.
+To switch Bluetooth off, set BLE MIDI to OFF on the GLOBAL page (GLO). The FM-1 stops advertising and drops any
+connection. To keep your choice for the next time the FM-1 starts, press SAVE.
 
 To connect FMtribe to a Bluetooth MIDI device, such as a keyboard or a controller, first put the device in its
-pairing or advertising mode. Then press REC, and the screen says BLE SCANNING. Turn ALGORITHM to pick the device
-by its name, and press REC again to connect. DEV in the header lights while it's connected, and the bottom line
-shows the last message it sent. To disconnect, press REC once more.
+pairing or advertising mode. Then open the DEVICES page (GLO, pressed until it shows 3/3): the FM-1 looks for
+devices while the page is up. Turn K1 to pick the device by its name, and press SAVE to connect. DEV in the header
+lights while it's connected, and the bottom line shows the last message it sent. To disconnect, press SAVE on that
+page again.
 
 The keys sense how hard you play them, with no change to the FM-1. The 20 lowest keys
 (F3 to C5) give velocity and pressure. The top seven give velocity only.

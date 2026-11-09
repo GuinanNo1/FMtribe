@@ -38,10 +38,12 @@ fi
 mkdir -p "$OUT/tribe"
 run tribe sh -c "$CC -O2 -ffp-contract=off -Ibase/include -Iapp/dsp -o $OUT/tribe_test tests/host/tribe_test.c -lm && \
     $OUT/tribe_test $OUT/tribe"
+run seq sh -c "$CC -O2 -Iapp/seq -o $OUT/seq_test tests/host/seq_test.c -lm && $OUT/seq_test"
 run host-build sh build.sh --host
-mkdir -p "$OUT/basic" "$OUT/sound"
+mkdir -p "$OUT/basic" "$OUT/sound" "$OUT/seq"
 run basic $B/host/fmtribe_host app/tests/basic.txt "$OUT/basic"
 run sound $B/host/fmtribe_host app/tests/sound.txt "$OUT/sound"
+run seq-panel $B/host/fmtribe_host app/tests/seq.txt "$OUT/seq"
 if command -v emcc >/dev/null 2>&1; then
     run emu sh build.sh --web
 else

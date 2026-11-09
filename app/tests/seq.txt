@@ -1,0 +1,254 @@
+# FMtribe's sequencer from the panel, in the host simulator: ./build.sh --host, then
+#   app/build/host/fmtribe_host app/tests/seq.txt app/build/tests/seq   (or: sh tests/run_tests.sh)
+# Its timing is tests/host/seq_test.c; this is the SEQ pages, the keys on them, PLAY, REC, and the pattern saved.
+# White keys 0 2 4 6 7 9 11 12 14 16 18 19 21 23 24 26 are slots 0..15 (step 1, 1+, 2, 2+ ...); on SEQ, black keys
+# 1 3 5 pick BD SN HH, 8 SYNTH; on SEQ STEPS, white keys 1..8 the active steps, black 1 3 5 8 clear all, synth, drums,
+# and reset the active steps.
+wait 600
+tap SEQ
+wait 30
+expect page 5
+expect tempo 120
+expect part 0
+shot seq_empty.png
+# a bass line: the last note a key played (C4, on another page) goes into the steps switched on
+tap ENV
+turn K1 1
+key 7 down
+wait 30
+key 7 up
+wait 30
+tap SEQ
+wait 30
+expect page 5
+tapkey 0
+tapkey 4
+tapkey 7
+wait 30
+expect on0 21
+expect note0 60
+expect note4 60
+# 8-step mode: a synth half slot can't be switched on
+tapkey 2
+wait 30
+expect on0 21
+# the drums: BD on the four quarter steps, SN on 3 and 7, HH on every step and the half of step 8
+key 1 down
+wait 30
+key 1 up
+expect part 1
+tapkey 0
+tapkey 7
+tapkey 14
+tapkey 21
+key 3 down
+wait 30
+key 3 up
+expect part 2
+tapkey 7
+tapkey 21
+key 5 down
+wait 30
+key 5 up
+wait 30
+expect part 3
+tapkey 0
+tapkey 4
+tapkey 7
+tapkey 11
+tapkey 14
+tapkey 18
+tapkey 21
+tapkey 24
+tapkey 26
+wait 30
+expect on1 4369
+expect on2 4112
+expect on3 54613
+key 8 down
+wait 30
+key 8 up
+wait 30
+expect part 0
+expect lit_keys 401
+shot seq_pattern.png
+# PLAY: two bars at 120 (a step 125 ms), the drums counted; the playhead half-lit on the keys
+out
+wav seq.wav
+press PLAY
+wait 20
+expect playing 1
+expect slot0 0
+expect mid_keys 1
+release PLAY
+wait 1900
+tap PLAY
+wait 30
+wavstop
+expect playing 0
+expect drum0 9
+expect drum1 5
+expect drum2 18
+expect_out USB F8 00 00
+expect_out USB FA 00 00
+expect_out USB FC 00 00
+expect_out USB 90 3C 64
+shot seq_stopped.png
+# TEMPO and SWING
+turn K1 20
+expect tempo 140
+turn K4 127
+expect swing 127
+turn K4 -127
+expect swing 0
+turn K1 -20
+# SEQ STEPS: the hi-hat over three steps only (a polyrhythm against the rest), then all eight again
+tap SEQ
+wait 30
+expect page 6
+turn K4 3
+expect part 3
+tapkey 6
+tapkey 7
+tapkey 9
+tapkey 11
+tapkey 12
+wait 30
+expect active3 7
+shot seq_steps.png
+# one step always stays on
+tapkey 0
+tapkey 2
+tapkey 4
+wait 30
+expect active3 4
+key 8 down
+wait 30
+key 8 up
+wait 30
+expect active3 255
+expect active0 255
+# 16 steps: the synth's half slots play
+turn K1 1
+expect steps16 1
+turn K1 -1
+expect steps16 0
+# SEQ EDIT: a step's note, gate and on; the keys write notes into the steps one after another
+tap SEQ
+wait 30
+expect page 7
+expect edstep 0
+turn K2 -12
+expect ednote 48
+expect note0 48
+turn K3 63
+expect edgate 127
+expect gate0 127
+key 2 down
+wait 30
+key 2 up
+wait 30
+expect note0 55
+expect edstep 2
+expect on0 21
+key 4 down
+wait 30
+key 4 up
+wait 30
+expect note2 57
+expect on0 21
+expect edstep 4
+turn K1 -1
+expect edstep 2
+turn K4 -1
+expect on0 17
+shot seq_edit.png
+# REC while playing: keys play and record the synth on any page, the DRUMS page's pads the drums
+tap ARP
+wait 30
+tap REC
+wait 30
+expect rec 1
+press PLAY
+wait 10
+key 12 down
+wait 60
+key 12 up
+release PLAY
+wait 300
+key 5 down
+wait 30
+key 5 up
+wait 1600
+tap PLAY
+wait 30
+tap REC
+expect rec 0
+expect note0 65
+expect gate0 <100
+expect on0 17
+# the clears: drums, then all
+tap SEQ
+tap SEQ
+wait 30
+expect page 6
+key 5 down
+wait 30
+key 5 up
+wait 30
+expect on1 0
+expect on3 0
+expect on0 17
+# the pattern is saved with the settings, and comes back after a restart
+tap SAVE
+wait 30
+reboot
+wait 600
+expect on0 17
+expect note0 65
+expect active3 255
+tap SEQ
+tap SEQ
+key 1 down
+wait 30
+key 1 up
+wait 30
+expect on0 0
+expect note0 60
+# MIDI clock in: SYNC MIDI, a start, then six clocks a step
+tap SEQ
+tap SEQ
+wait 30
+expect page 5
+key 1 down
+wait 30
+key 1 up
+wait 30
+tapkey 0
+tapkey 4
+tapkey 7
+tapkey 11
+tap SEQ
+turn K2 1
+expect sync 1
+midi FA
+wait 20
+midi F8
+wait 20
+midi F8
+wait 20
+midi F8
+wait 20
+midi F8
+wait 20
+midi F8
+wait 20
+midi F8
+wait 20
+midi F8
+wait 20
+expect playing 1
+expect slot1 2
+midi FC
+wait 30
+expect playing 0

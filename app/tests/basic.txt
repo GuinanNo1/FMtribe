@@ -43,9 +43,9 @@ midi 80 3C 00
 listen
 wait 100
 said FMTRIBE. OCTAVE +1. VCO VCF 1/1. CUTOFF 80. PEAK 30. WAVE TRI. NOISE 0
-tap PLAY
+tap HOME
 wait 30
-said BUTTON PLAY
+said BUTTON HOME
 # MASTER turned while a note plays: the gain glides, so no sample jumps further than the wave itself does
 midi 90 45 64
 wait 100
@@ -71,40 +71,43 @@ expect prs >40
 shot touch.png
 key 7 up
 wait 50
-# REC held a second: Bluetooth off (and saved: off after a restart too), then on again
+# GLOBAL 1/2, K3: Bluetooth MIDI off (and saved: off after a restart too), then on again
 listen
 wait 1200
-press REC
-wait 1100
-release REC
+tap GLO
+wait 30
+turn K3 1
 wait 50
-said BLUETOOTH OFF
+said BLE MIDI OFF
 expect ble 0
 tap SAVE
 wait 30
 reboot
 wait 1200
 expect ble 0
-press REC
-wait 1100
-release REC
+tap GLO
+wait 30
+turn K3 -1
 wait 1200
-said BLUETOOTH ON
+said BLE MIDI ON
 expect ble 2
-# REC: look for Bluetooth MIDI devices, connect to the one found, let it go (lib/btdev)
-tap REC
-said BLE SCANNING
+# GLOBAL 3/3, DEVICES: it looks for Bluetooth MIDI devices while it's up; K1 picks one, SAVE connects to it and
+# lets it go (lib/btdev)
+tap GLO
+tap GLO
 wait 700
-said DEVICE BLE MIDI
-tap REC
+expect page 10
+expect bledev 0
+shot devices.png
+tap SAVE
 said CONNECTING BLE MIDI
 wait 500
 said DEVICE CONNECTED
 expect ble_dev 4
-tap REC
+tap SAVE
 said BLE DISCONNECTED
 wait 100
-expect ble_dev 0
+expect ble_dev <4
 unsaid LOST
 # each port's messages counted (plat_midi_count): this is the fifth from USB in this script
 midi USB 90 40 50
@@ -114,9 +117,8 @@ midi USB 80 40 00
 # Bluetooth's two links, the computer's and the device's: TO_BLE goes to both, each with its own room; their MIDI
 # comes in on PORT_BLE, and plat_midi_in_from says which link (MIDI thru sends it to every other)
 ble connect
-tap REC
 wait 700
-tap REC
+tap SAVE
 wait 500
 expect ble_dev 4
 expect room_ble 64
@@ -153,7 +155,7 @@ key 7 up
 wait 50
 expect_out BLE-DEV 80 48 00
 expect_no_out BLE 80 48 00
-tap REC
+tap SAVE
 wait 100
-expect ble_dev 0
+expect ble_dev <4
 expect room_ble_dev 0

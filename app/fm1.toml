@@ -3,8 +3,8 @@ name = "FMtribe"               # the build's files: fmtribe.fwsc, fmtribe-X.Y.fw
 id_prefix = "FM-1_59"          # package identity: dev FM-1_5900, releases FM-1_59XXYYZZ (GIO-1 is FM-1_58)
 usb_manufacturer = "FMtribe"
 usb_product = "FMtribe FM-1"
-o2 = ["dsp/tribe.c"]           # the DSP: the synth voice and the drums, compiled at -O2
-include = ["dsp"]              # tribe.h for app.c
+o2 = ["dsp/tribe.c", "seq/seq.c"]   # the DSP (the synth voice and the drums) and the sequencer, at -O2
+include = ["dsp", "seq"]       # their headers for app.c
 words = "words.tsv"
 # Bluetooth MIDI (fm1-base's JieLi stack; ./build.sh --no-ble is the USB-only fallback build)
 ble = true

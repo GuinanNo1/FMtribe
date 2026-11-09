@@ -7,17 +7,24 @@
  * gfx.c and announce.c are in scope. */
 #include "fastmath.h"
 #include "tribe.h"
+#include "seq.h"
 
 /* ------------------------------------------------------------- the settings --- */
 /* every setting the panel edits, by number: a knob's 0..127, or a switch's position (its OPT names) */
 enum { P_CUTOFF, P_PEAK, P_WAVE, P_NOISE, P_EG, P_LEVEL, P_RHYTHM, P_LRATE, P_LINT, P_LTARGET, P_LMODE, P_LWAVE,
-       P_SYNTH_CH, P_DRUM_CH, P_BLE, P_BD_DEC, P_SN_DEC, P_HH_DEC, P_KEYLIGHT, P_GLOW, NP };
+       P_SYNTH_CH, P_DRUM_CH, P_BLE, P_BD_DEC, P_SN_DEC, P_HH_DEC, P_KEYLIGHT, P_GLOW,
+       P_TEMPO, P_PART, P_GATE, P_SWING, P_SYNC, P_CLKOUT,
+       NSAVED,                                   /* the settings saved; after them, what the knobs edit elsewhere: */
+       P_STEPS16 = NSAVED,                       /* the pattern's 16-step synth */
+       P_EDSTEP, P_EDNOTE, P_EDGATE, P_EDON,     /* the step editor: its slot, and that slot's note, gate, on */
+       P_BLEDEV,                                 /* the Bluetooth MIDI device picked (lib/btdev) */
+       NP };
 enum { KL_OFF, KL_HELD, KL_GUIDE, NKL };   /* KEY LIGHT: none, the keys held, those and the page's key functions */
 typedef struct {
     const char *name;
-    uint8_t nopt;                        /* 0: a knob, 0..127; else a switch with this many positions */
+    uint8_t nopt;                        /* 0: a knob, 0..127 (or to hi); else a switch with this many positions */
     const char *const *opt;              /* a switch's positions, as the screen shows them */
-    uint8_t def;
+    uint16_t def, lo, hi;                /* (lo and hi: a knob's range when not 0..127) */
 } param_t;
 static const char *const WAVE_OPT[TRIBE_NWAVE] = {"SAW", "TRI", "SQUARE"};
 static const char *const EG_OPT[TRIBE_NEG] = {"DECAY", "GATE", "ATTACK"};
@@ -29,51 +36,76 @@ static const char *const CH_OPT[16] = {"1", "2", "3", "4", "5", "6", "7", "8", "
 static const char *const BLE_OPT[2] = {"ON", "OFF"};   /* (stored as "off", so 0, the default, is on) */
 static const char *const KL_OPT[NKL] = {"OFF", "HELD", "GUIDE"};
 static const char *const GLOW_OPT[3] = {"OFF", "LOW", "HIGH"};
+static const char *const PART_OPT[SEQ_NPART] = {"SYNTH", "BD", "SN", "HH"};
+static const char *const STEPS_OPT[2] = {"8", "16"};
+static const char *const SYNC_OPT[2] = {"INT", "MIDI"};
+static const char *const OFFON_OPT[2] = {"OFF", "ON"};
 static const param_t PAR[NP] = {
-    {"CUTOFF", 0, 0, 80},
-    {"PEAK", 0, 0, 30},
-    {"WAVE", TRIBE_NWAVE, WAVE_OPT, TRIBE_SAW},
-    {"NOISE", 0, 0, 0},
-    {"EG", TRIBE_NEG, EG_OPT, TRIBE_DECAY},
-    {"LEVEL", 0, 0, 100},
-    {"RHYTHM", 0, 0, 90},
-    {"RATE", 0, 0, 64},
-    {"INT", 0, 0, 0},
-    {"TARGET", TRIBE_NTARGET, TARGET_OPT, TRIBE_LFO_VCO},
-    {"MODE", TRIBE_NMODE, MODE_OPT, TRIBE_LFO_SLOW},
-    {"WAVE", TRIBE_NLWAVE, LWAVE_OPT, TRIBE_LFO_TRI},
-    {"SYNTH CH", 16, CH_OPT, 0},        /* the MIDI channels: the synth's (in and out), the drums' */
-    {"DRUM CH", 16, CH_OPT, 9},
-    {"BLE MIDI", 2, BLE_OPT, 0},         /* Bluetooth MIDI on or off (REC held, too) */
-    {"BD DECAY", 0, 0, 32},              /* the drums' decays: 32 stock (the decay mods' pots, as a setting) */
-    {"SN DECAY", 0, 0, 32},
-    {"HH DECAY", 0, 0, 32},
-    {"KEY LIGHT", NKL, KL_OPT, KL_GUIDE},
-    {"GLOW", 3, GLOW_OPT, 1},            /* the unlit buttons' and the guide keys' glow */
+    {"CUTOFF", 0, 0, 80, 0, 0},
+    {"PEAK", 0, 0, 30, 0, 0},
+    {"WAVE", TRIBE_NWAVE, WAVE_OPT, TRIBE_SAW, 0, 0},
+    {"NOISE", 0, 0, 0, 0, 0},
+    {"EG", TRIBE_NEG, EG_OPT, TRIBE_DECAY, 0, 0},
+    {"LEVEL", 0, 0, 100, 0, 0},
+    {"RHYTHM", 0, 0, 90, 0, 0},
+    {"RATE", 0, 0, 64, 0, 0},
+    {"INT", 0, 0, 0, 0, 0},
+    {"TARGET", TRIBE_NTARGET, TARGET_OPT, TRIBE_LFO_VCO, 0, 0},
+    {"MODE", TRIBE_NMODE, MODE_OPT, TRIBE_LFO_SLOW, 0, 0},
+    {"WAVE", TRIBE_NLWAVE, LWAVE_OPT, TRIBE_LFO_TRI, 0, 0},
+    {"SYNTH CH", 16, CH_OPT, 0, 0, 0},        /* the MIDI channels: the synth's (in and out), the drums' */
+    {"DRUM CH", 16, CH_OPT, 9, 0, 0},
+    {"BLE MIDI", 2, BLE_OPT, 0, 0, 0},         /* Bluetooth MIDI on or off */
+    {"BD DECAY", 0, 0, 32, 0, 0},              /* the drums' decays: 32 stock (the decay mods' pots, as a setting) */
+    {"SN DECAY", 0, 0, 32, 0, 0},
+    {"HH DECAY", 0, 0, 32, 0, 0},
+    {"KEY LIGHT", NKL, KL_OPT, KL_GUIDE, 0, 0},
+    {"GLOW", 3, GLOW_OPT, 1, 0, 0},            /* the unlit buttons' and the guide keys' glow */
+    {"TEMPO", 0, 0, 120, 10, 600},       /* BPM: the monotribe's WIDE range */
+    {"PART", SEQ_NPART, PART_OPT, SEQ_SYNTH, 0, 0},   /* the part the keys and the step editor edit */
+    {"GATE", 0, 0, 64, 0, 0},                  /* a new note's gate time (127: tied) */
+    {"SWING", 0, 0, 0, 0, 0},                  /* 0 straight .. 127 a triplet feel */
+    {"SYNC", 2, SYNC_OPT, 0, 0, 0},            /* the internal tempo, or MIDI clock in */
+    {"CLOCK OUT", 2, OFFON_OPT, 1, 0, 0},      /* MIDI clock, start and stop out */
+    {"STEPS", 2, STEPS_OPT, 0, 0, 0},          /* (the pattern's) */
+    {"STEP", 0, 0, 0, 0, 15},
+    {"NOTE", 0, 0, 60, 0, 0},
+    {"GATE", 0, 0, 64, 0, 0},
+    {"ON", 2, OFFON_OPT, 0, 0, 0},
+    {"DEVICE", 0, 0, 0, 0, 0},
 };
 
-/* the pages: a button shows its page and K1..K4 edit it; pressed again, its next page (LFO has two) */
+/* the pages: a button shows its page and K1..K4 edit it; pressed again, its next page */
 typedef struct {
-    const char *name;                    /* on the tab */
+    const char *name;                    /* in the header and to a screen reader */
+    const char *tab;                     /* on the tab (the button's first page's) */
     uint8_t button;                      /* plat.h B_* */
     int8_t p[4];                         /* the settings on K1..K4 (-1: none) */
 } page_t;
-enum { PG_VCF, PG_VCA, PG_LFO1, PG_LFO2, PG_DRUMS, PG_GLOBAL, PG_GLOBAL2, NPG };   /* (SEQ: the sequencer's, next) */
+enum { PG_VCF, PG_VCA, PG_LFO1, PG_LFO2, PG_DRUMS, PG_SEQ, PG_STEPS, PG_EDIT, PG_GLOBAL, PG_GLOBAL2, PG_DEVICES, NPG };
 static const page_t PAGE[NPG] = {
-    {"VCO VCF", B_SEL, {P_CUTOFF, P_PEAK, P_WAVE, P_NOISE}},
-    {"EG VCA", B_ENV, {P_EG, P_LEVEL, -1, -1}},
-    {"LFO", B_LFO, {P_LRATE, P_LINT, P_LTARGET, P_LMODE}},
-    {"LFO", B_LFO, {P_LWAVE, -1, -1, -1}},
-    {"DRUMS", B_ARP, {P_RHYTHM, P_BD_DEC, P_SN_DEC, P_HH_DEC}},   /* and the black keys play them */
-    {"GLOBAL", B_GLO, {P_SYNTH_CH, P_DRUM_CH, P_BLE, -1}},
-    {"GLOBAL", B_GLO, {P_KEYLIGHT, P_GLOW, -1, -1}},
+    {"VCO VCF", "VCF", B_SEL, {P_CUTOFF, P_PEAK, P_WAVE, P_NOISE}},
+    {"EG VCA", "EG", B_ENV, {P_EG, P_LEVEL, -1, -1}},
+    {"LFO", "LFO", B_LFO, {P_LRATE, P_LINT, P_LTARGET, P_LMODE}},
+    {"LFO", "LFO", B_LFO, {P_LWAVE, -1, -1, -1}},
+    {"DRUMS", "DRUM", B_ARP, {P_RHYTHM, P_BD_DEC, P_SN_DEC, P_HH_DEC}},   /* and the black keys play them */
+    /* the sequencer: the white keys are the part's 16 slots, the black ones pick the part; then the active steps
+     * (white keys 1..8) and the clears (black keys); then a step's note, gate and on (the keys write its note) */
+    {"SEQ", "SEQ", B_SEQ, {P_TEMPO, P_PART, P_GATE, P_SWING}},
+    {"SEQ STEPS", "SEQ", B_SEQ, {P_STEPS16, P_SYNC, P_CLKOUT, P_PART}},
+    {"SEQ EDIT", "SEQ", B_SEQ, {P_EDSTEP, P_EDNOTE, P_EDGATE, P_EDON}},
+    {"GLOBAL", "GLO", B_GLO, {P_SYNTH_CH, P_DRUM_CH, P_BLE, -1}},
+    {"GLOBAL", "GLO", B_GLO, {P_KEYLIGHT, P_GLOW, -1, -1}},
+    {"DEVICES", "GLO", B_GLO, {P_BLEDEV, -1, -1, -1}},   /* SAVE connects the pick, or lets it go (lib/btdev) */
 };
 
-#define SET_MAGIC 0x35544D46u            /* "FMT5": the settings record; another magic loads defaults */
+#define SET_MAGIC 0x36544D46u            /* "FMT6": the settings record; another magic loads defaults */
 typedef struct {
     uint32_t magic;
     int8_t octave;                       /* -3 .. +2: six positions, as the monotribe's 64' .. 2' */
-    uint8_t v[NP];                       /* the settings above */
+    uint8_t rsv;
+    uint16_t v[NSAVED];                  /* the settings above */
+    seq_pattern_t pat;                   /* the sequencer's pattern, saved with them */
 } settings_t;
 static settings_t set;
 static uint8_t set_dirty;                /* changed since the last save: SAVE is lit */
@@ -87,8 +119,59 @@ static const char *const BTN_NAME[NB] = {"FX", "SEL", "ENV", "LFO", "EDIT", "GLO
  * synth there, and the other black keys nothing */
 static const uint8_t PAD_KEY[2][TRIBE_NDRUM] = {{1, 3, 5}, {13, 15, 17}};
 #define PAD_KEYS (1u << 1 | 1u << 3 | 1u << 5 | 1u << 13 | 1u << 15 | 1u << 17)
-#define BLACK_KEYS (PAD_KEYS | 1u << 8 | 1u << 10 | 1u << 20 | 1u << 22 | 1u << 25)
 static int key_pad(uint32_t k);          /* (UI: the drum a key plays on this page, or -1) */
+static const uint8_t WHITE[16] = PLAT_WHITE_KEYS;   /* the white keys, low to high: the sequencer's slots */
+static int white_index(uint32_t k)       /* a key's place among the white keys, or -1 for a black one */
+{
+    int i;
+    for (i = 0; i < 16; i++)
+        if (WHITE[i] == k)
+            return i;
+    return -1;
+}
+
+/* the settings' values: the saved ones, and what the knobs edit in the pattern and the device list */
+static uint8_t ed_slot;                  /* the step editor's slot */
+static int pmax(int pn)
+{
+    if (pn == P_BLEDEV)
+        return btdev_count() > 0 ? btdev_count() - 1 : 0;
+    return PAR[pn].nopt ? PAR[pn].nopt - 1 : PAR[pn].hi ? PAR[pn].hi : 127;
+}
+static int pget(int pn)
+{
+    if (pn < NSAVED)
+        return set.v[pn];
+    switch (pn) {
+    case P_STEPS16: return set.pat.steps16;
+    case P_EDSTEP: return ed_slot;
+    case P_EDNOTE: return set.pat.note[ed_slot];
+    case P_EDGATE: return set.pat.gate[ed_slot];
+    case P_EDON: return set.pat.on[SEQ_SYNTH] >> ed_slot & 1u;
+    case P_BLEDEV: return btdev_pick();
+    }
+    return 0;
+}
+static void pset(int pn, int v)
+{
+    if (pn < NSAVED) {
+        set.v[pn] = (uint16_t)v;
+        return;
+    }
+    switch (pn) {
+    case P_STEPS16: set.pat.steps16 = (uint8_t)v; break;
+    case P_EDSTEP: ed_slot = (uint8_t)v; break;
+    case P_EDNOTE: set.pat.note[ed_slot] = (uint8_t)v; break;
+    case P_EDGATE: set.pat.gate[ed_slot] = (uint8_t)v; break;
+    case P_EDON:
+        if (v)
+            set.pat.on[SEQ_SYNTH] |= (uint16_t)(1u << ed_slot);
+        else
+            set.pat.on[SEQ_SYNTH] &= (uint16_t)~(1u << ed_slot);
+        break;
+    case P_BLEDEV: btdev_choose(v); break;
+    }
+}
 
 static void engine_update(void)          /* the settings to the engine */
 {
@@ -109,6 +192,10 @@ static void engine_update(void)          /* the settings to the engine */
     p.decay[1] = fm_exp2f(((float)set.v[P_SN_DEC] - 32.0f) / 24.0f);
     p.decay[2] = fm_exp2f(((float)set.v[P_HH_DEC] - 32.0f) / 24.0f);
     tribe_set(&p);
+    seq_tempo((float)set.v[P_TEMPO]);
+    seq_swing((float)set.v[P_SWING] / 127.0f);
+    seq_ext(set.v[P_SYNC]);
+    seq_clock_out(set.v[P_CLKOUT]);
 }
 
 static void param_text(int p, char *t);  /* (UI) */
@@ -176,6 +263,78 @@ static void key_up(int32_t note)
     }
 }
 
+/* --------------------------------------------------------------- sequencer --- */
+/* what the sequencer plays (seq.h's callbacks, in the audio interrupt): the voice, and the notes out over MIDI */
+static volatile int32_t seq_note = -1;       /* the sequencer's note sounding */
+static void midi_send(uint32_t st, uint32_t d1, uint32_t d2)
+{
+    plat_midi_send((st >> 4) | st << 8 | d1 << 16 | d2 << 24, TO_USB | TO_BLE);
+}
+void seq_cb_note_on(uint8_t note)
+{
+    if (seq_note >= 0)
+        midi_send(0x80u | set.v[P_SYNTH_CH], (uint32_t)seq_note, 0);
+    seq_note = note;
+    voice_note = note;
+    tribe_note_on(note_pitch(note));
+    midi_send(0x90u | set.v[P_SYNTH_CH], note, 100);
+}
+void seq_cb_note_off(void)
+{
+    if (seq_note < 0)
+        return;
+    midi_send(0x80u | set.v[P_SYNTH_CH], (uint32_t)seq_note, 0);
+    if (voice_note == seq_note && !nheld)    /* (a key held since plays on) */
+        note_off(seq_note);
+    seq_note = -1;
+}
+void seq_cb_drum(int part)
+{
+    int d = part - SEQ_BD;
+    drum(d);
+    midi_send(0x90u | set.v[P_DRUM_CH], DRUM_NOTE[d], 100);
+    midi_send(0x80u | set.v[P_DRUM_CH], DRUM_NOTE[d], 0);
+}
+void seq_cb_clock(uint8_t st) { plat_midi_send(0x0Fu | (uint32_t)st << 8, TO_USB | TO_BLE); }
+
+/* recording (main loop): REC armed and playing, a key's note or a pad's hit lands on the nearest slot it can play */
+static uint8_t rec_armed;
+static int8_t rec_slot = -1;                 /* the synth note being recorded: its slot, its key, when it started */
+static int32_t rec_note;
+static uint32_t rec_t0;
+static int recording(void) { return rec_armed && seq_playing(); }
+static void rec_note_on(int32_t note)
+{
+    int sl = seq_rec_slot(SEQ_SYNTH);
+    if (sl < 0)
+        return;
+    set.pat.note[sl] = (uint8_t)note;
+    set.pat.gate[sl] = (uint8_t)set.v[P_GATE];
+    set.pat.on[SEQ_SYNTH] |= (uint16_t)(1u << sl);
+    rec_slot = (int8_t)sl;
+    rec_note = note;
+    rec_t0 = seq_now();
+    set_dirty = 1;
+}
+static void rec_note_off(int32_t note)       /* the gate time as held: 1.4 % .. 100 % of the slot, longer is tied */
+{
+    float f;
+    uint32_t len = set.pat.steps16 ? SEQ_TPS / 2u : SEQ_TPS;
+    if (rec_slot < 0 || note != rec_note)
+        return;
+    f = (float)(seq_now() - rec_t0) / (float)len;
+    set.pat.gate[rec_slot] = (uint8_t)(f >= 1.0f ? SEQ_GATE_TIE : clamp((int32_t)((f - 0.014f) / 0.986f * 127.0f), 0, 126));
+    rec_slot = -1;
+}
+static void rec_drum(int d)
+{
+    int sl = seq_rec_slot(SEQ_BD + d);
+    if (sl >= 0) {
+        set.pat.on[SEQ_BD + d] |= (uint16_t)(1u << sl);
+        set_dirty = 1;
+    }
+}
+
 static volatile uint32_t midi_last, midi_last_port, midi_count;   /* the last message in (shown), and how many */
 static volatile uint32_t midi_knobs;         /* a CC moved a setting: the main loop redraws and marks it changed */
 static void midi_in(void)                    /* audio interrupt: the packets that came in */
@@ -188,6 +347,10 @@ static void midi_in(void)                    /* audio interrupt: the packets tha
             midi_last = pkt;
             midi_last_port = (uint32_t)port;
             midi_count++;
+        }
+        if (st >= 0xF8u) {                   /* real time: the clock, start and stop, with SYNC on MIDI */
+            seq_midi_rt((uint8_t)st);
+            continue;
         }
         if (ch == set.v[P_DRUM_CH]) {        /* the drums' channel (10) */
             if (ty == 0x90u && d2)
@@ -223,7 +386,12 @@ void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
     midi_in();
     if (n > APP_BLOCK)
         n = APP_BLOCK;
-    tribe_render(render_buf, n);
+    for (i = 0; i < n;) {                    /* the sound, cut where the sequencer's ticks and note offs fall */
+        uint32_t k = seq_frames(n - i);
+        tribe_render(render_buf + i, k);
+        seq_advance(k);
+        i += k;
+    }
     for (i = 0; i < n; i++) {
         int32_t s;
         gain_now += (gain - gain_now) * 0.004f;                  /* ~5 ms: turning MASTER does not click */
@@ -235,6 +403,7 @@ void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
 
 void app_panic(void)
 {
+    seq_play(0);
     voice_note = -1;
     nheld = 0;
     tribe_panic();
@@ -246,8 +415,9 @@ static void settings_defaults(void)
     uint32_t i;
     set.magic = SET_MAGIC;
     set.octave = 0;
-    for (i = 0; i < NP; i++)
+    for (i = 0; i < NSAVED; i++)
         set.v[i] = PAR[i].def;
+    seq_clear(&set.pat, SEQ_CLEAR_ALL);
 }
 
 void app_init(void)
@@ -256,10 +426,13 @@ void app_init(void)
     if (plat_store_load(OBJ_SETTINGS, &set, sizeof set) != (int)sizeof set || set.magic != SET_MAGIC
         || set.octave < -3 || set.octave > 2)
         bad = 1;
-    for (i = 0; i < NP; i++)
-        bad |= PAR[i].nopt ? set.v[i] >= PAR[i].nopt : set.v[i] > 127u;
+    for (i = 0; i < NSAVED; i++)
+        bad |= set.v[i] < PAR[i].lo || (int)set.v[i] > pmax((int)i);
+    for (i = 0; i < SEQ_SLOTS; i++)
+        bad |= set.pat.note[i] > 127u || set.pat.gate[i] > 127u;
     if (bad)
         settings_defaults();
+    seq_init(&set.pat);
     tribe_init();
     engine_update();
 }
@@ -271,8 +444,8 @@ static struct {
     uint32_t keys, btn;                  /* held at the last input */
     uint8_t vel[NKEYS], prs[NKEYS];      /* each key's last velocity, and its pressure while held */
     int32_t last_key;                    /* the key pressed last: its numbers in the header */
-    uint8_t looking;                     /* Bluetooth MIDI devices: REC pressed, the scan's list up (lib/btdev) */
-    uint32_t rec_t;                      /* REC went down (0: not held, or its hold already acted) */
+    uint32_t key_synth;                  /* the keys held that play the synth (their release lets it go) */
+    int32_t last_note;                   /* the last note a key played: a step switched on takes it */
     int32_t turns[NE];                   /* detents since boot, per encoder */
     uint32_t turned_at[NE];              /* when each was last turned: it shows lit for a moment */
     uint32_t drum_seen, drum_at[TRIBE_NDRUM];   /* the drums' hit counts drawn, and when each last hit */
@@ -334,12 +507,34 @@ static void octave_text(char *t)
     t[2] = 0;
 }
 
+static void note_name(int32_t note, char *b);
 static void param_text(int p, char *t)   /* a setting's value as the screen shows it */
 {
+    int v = pget(p);
+    t[0] = 0;
     if (PAR[p].nopt)
-        t[0] = 0, text_cat(t, PAR[p].opt[set.v[p]]);
-    else
-        int_text(set.v[p], t);
+        text_cat(t, PAR[p].opt[v]);
+    else if (p == P_EDNOTE)
+        note_name(v, t);
+    else if ((p == P_GATE || p == P_EDGATE) && v >= SEQ_GATE_TIE)
+        text_cat(t, "TIE");
+    else if (p == P_EDSTEP) {                /* step 3, or 3+: half-way through it */
+        int_text(v / 2 + 1, t);
+        if (v & 1)
+            text_cat(t, "+");
+    } else if (p == P_SWING) {               /* 50 % straight .. 67 % a triplet */
+        int_text(50 + (v * 17 + 63) / 127, t);
+        text_cat(t, "%");
+    } else if (p == P_BLEDEV) {
+        char n[21];
+        if (btdev_found(v, n, 0)) {
+            n[9] = 0;                        /* (a knob's slot is narrow) */
+            text_cat(t, n);
+        } else {
+            text_cat(t, set.v[P_BLE] ? "BLE OFF" : "SCANNING");
+        }
+    } else
+        int_text(v, t);
 }
 
 static uint32_t page_of(uint32_t pg, uint32_t *n)   /* a page's place among its button's pages (0-based), and how many */
@@ -474,57 +669,159 @@ static void octave_step(int32_t d)
 
 int fmtribe_ble_off(void) { return set.v[P_BLE]; }
 
-/* REC held a second: Bluetooth off or on (kept with the settings, so it stays so at the next power-on) */
-static void ble_toggle(void)
-{
-    set.v[P_BLE] = (uint8_t)!set.v[P_BLE];
-    set_dirty = 1;
-    plat_ble_enable(!set.v[P_BLE]);
-    app_say("BLUETOOTH", set.v[P_BLE] ? "OFF" : "ON");
-    ui.redraw = 1;
-}
-
-/* REC: a Bluetooth MIDI device (FM1B_BLE_CENTRAL, lib/btdev): look for devices, then connect to the one ALGORITHM
- * picks, then let it go */
-static void ble_device_say(void)
-{
-    char name[21];
-    if (btdev_found(btdev_pick(), name, 0))
-        app_say("DEVICE", name);
-    else
-        app_say("BLE", "SCANNING");
-}
-static void ble_device_button(void)
-{
-    int ev;
-    if (!btdev_busy() && !ui.looking) {
-        ui.looking = 1;
-        app_say("BLE", "SCANNING");
-        return;
-    }
-    ev = btdev_save();
-    ui.looking = 0;
-    app_say(ev == BTDEV_CONNECTING ? btdev_word(ev) : "BLE", ev == BTDEV_CONNECTING ? btdev_name() : btdev_word(ev));
-}
-
-/* the lights: the held buttons, the page's button and SAVE (something to save) lit, the others glowing (GLOW); the keys
- * by KEY LIGHT: none, the held ones, or those and the page's key functions dimly (the DRUMS page's pads) */
-static uint32_t lit_keys_now, dim_keys_now;  /* (the host's checks) */
+/* the lights: the held buttons, the page's button, SAVE (something to save) and REC (armed) lit, PLAY green while it
+ * plays (red recording), the others glowing (GLOW); the keys by KEY LIGHT: none, the held ones, or those and the
+ * page's key functions (GUIDE): the DRUMS page's pads glow; on SEQ, the part's slots that play are lit, the others in
+ * its active steps glow, and the playhead shows half-lit; on SEQ STEPS, the active steps lit, the clears glowing */
+static uint32_t lit_keys_now, dim_keys_now, mid_keys_now;   /* (the host's checks) */
+#define PART_KEYS (1u << 1 | 1u << 3 | 1u << 5 | 1u << 8)   /* SEQ: F#3 G#3 A#3 pick BD SN HH, C#4 SYNTH */
+static const uint8_t PART_KEY[SEQ_NPART] = {8, 1, 3, 5};
 static void lights(uint32_t btn, uint32_t keys)
 {
-    uint32_t b = btn | 1u << PAGE[ui.page].button | (set_dirty ? 1u << B_SAVE : 0u), lit = 0, dim = 0;
-    int kl = set.v[P_KEYLIGHT], glow = set.v[P_GLOW];
+    uint32_t b = btn | 1u << PAGE[ui.page].button | (set_dirty ? 1u << B_SAVE : 0u) | (rec_armed ? 1u << B_REC : 0u),
+             lit = 0, dim = 0, mid = 0, i;
+    int kl = set.v[P_KEYLIGHT], glow = set.v[P_GLOW], part = set.v[P_PART];
+    if (seq_playing())
+        b |= rec_armed ? 1u << B_PLAY : LED_PLAY_GREEN;
     if (kl >= KL_HELD)
         lit = keys;
-    if (kl == KL_GUIDE && ui.page == PG_DRUMS)
-        dim = PAD_KEYS;
+    if (kl == KL_GUIDE && !rec_armed) {
+        if (ui.page == PG_DRUMS)
+            dim = PAD_KEYS;
+        else if (ui.page == PG_SEQ) {
+            int sl = seq_slot(part);
+            for (i = 0; i < SEQ_SLOTS; i++) {
+                if (part == SEQ_SYNTH && !set.pat.steps16 && (i & 1u))
+                    continue;
+                if (set.pat.on[part] >> i & 1u)
+                    lit |= 1u << WHITE[i];
+                else if (set.pat.active[part] >> (i / 2u) & 1u)
+                    dim |= 1u << WHITE[i];
+            }
+            if (sl >= 0 && !(part == SEQ_SYNTH && !set.pat.steps16 && (sl & 1)))
+                mid = 1u << WHITE[sl];
+            dim |= PART_KEYS & ~(1u << PART_KEY[part]);
+            lit |= 1u << PART_KEY[part];
+        } else if (ui.page == PG_STEPS) {
+            int st = seq_step(part);
+            for (i = 0; i < SEQ_STEPS; i++)
+                if (set.pat.active[part] >> i & 1u)
+                    lit |= 1u << WHITE[i];
+            if (st >= 0)
+                mid = 1u << WHITE[st];
+            dim = PART_KEYS;
+        }
+    }
     lit_keys_now = lit;
-    dim_keys_now = dim;
-    if (glow == 0 && dim) {                  /* the guide wants a glow: the keys' then, but not the buttons' */
-        glow = 1;
-        plat_lights(b, lit, 0, dim, glow);
+    dim_keys_now = dim & ~lit;
+    mid_keys_now = mid;
+    if (glow == 0 && (dim | mid)) {          /* the guide wants a glow: the keys' then, but not the buttons' */
+        plat_lights(b, lit, 0, dim & ~lit, 1);
     } else {
-        plat_lights(b, lit, glow ? ~b & ((1u << NB) - 1u) : 0, dim, glow);
+        plat_lights(b, lit, glow ? ~b & ((1u << NB) - 1u) : 0, dim & ~lit, glow);
+    }
+    plat_lights_mid(0, mid & ~lit);
+}
+
+/* the keys: what a press does depends on the page; the synth's keys are let go as they were pressed */
+static void synth_key(uint32_t k, int32_t note, uint32_t v)
+{
+    ui.vel[k] = (uint8_t)v;
+    ui.prs[k] = 0;
+    ui.last_key = (int32_t)k;
+    ui.last_note = note;
+    ui.key_synth |= 1u << k;
+    key_down(note, v);
+    plat_midi_send(0x09u | (0x90u | set.v[P_SYNTH_CH]) << 8 | (uint32_t)note << 16 | v << 24, TO_USB | TO_BLE);
+    if (recording())
+        rec_note_on(note);
+}
+
+static void pad(int d)                   /* a drum played from the keys: heard, sent, and recorded */
+{
+    drum(d);
+    plat_midi_send(0x09u | (0x90u | set.v[P_DRUM_CH]) << 8 | (uint32_t)DRUM_NOTE[d] << 16 | 100u << 24, TO_USB | TO_BLE);
+    plat_midi_send(0x08u | (0x80u | set.v[P_DRUM_CH]) << 8 | (uint32_t)DRUM_NOTE[d] << 16, TO_USB | TO_BLE);
+    if (recording())
+        rec_drum(d);
+}
+
+static void step_say(const char *what, int slot)   /* "STEP 3+" "ON" */
+{
+    char t[24] = "STEP ", n[8];
+    int_text(slot / 2 + 1, n);
+    text_cat(t, n);
+    if (slot & 1)
+        text_cat(t, "+");
+    app_say(t, what);
+}
+
+static void key_press(uint32_t k, int32_t note)
+{
+    int w = white_index(k), part = set.v[P_PART], d = key_pad(k), i;
+    if (d >= 0) {                            /* DRUMS: the pads (recorded while REC records) */
+        pad(d);
+        return;
+    }
+    if (rec_armed || (ui.page != PG_SEQ && ui.page != PG_STEPS && !(ui.page == PG_DRUMS && w < 0))) {
+        synth_key(k, note, touch_vel(k));
+        if (ui.page == PG_EDIT && !rec_armed) {   /* SEQ EDIT: the note into the step, and on to the next */
+            set.pat.note[ed_slot] = (uint8_t)note;
+            set.pat.on[SEQ_SYNTH] |= (uint16_t)(1u << ed_slot);
+            set_dirty = 1;
+            step_say(PAR[P_EDNOTE].name, ed_slot);
+            ed_slot = (uint8_t)((ed_slot + (set.pat.steps16 ? 1u : 2u)) % SEQ_SLOTS);
+        }
+        return;
+    }
+    if (ui.page == PG_SEQ) {
+        if (w >= 0) {                        /* a slot of the part: on or off */
+            if (part == SEQ_SYNTH && !set.pat.steps16 && (w & 1)) {
+                app_say("16 STEPS", "OFF");
+                return;
+            }
+            set.pat.on[part] ^= (uint16_t)(1u << w);
+            if (part == SEQ_SYNTH && (set.pat.on[part] >> w & 1u)) {
+                set.pat.note[w] = (uint8_t)(ui.last_note ? ui.last_note : 60);
+                set.pat.gate[w] = (uint8_t)set.v[P_GATE];
+            }
+            set_dirty = 1;
+            step_say(set.pat.on[part] >> w & 1u ? "ON" : "OFF", w);
+        } else {
+            for (i = 0; i < SEQ_NPART; i++)  /* a part's black key: that part (a drum's, heard) */
+                if (PART_KEY[i] == k) {
+                    set.v[P_PART] = (uint16_t)i;
+                    if (i != SEQ_SYNTH)
+                        drum(i - SEQ_BD);
+                    app_say("PART", PART_OPT[i]);
+                }
+        }
+        return;
+    }
+    if (ui.page == PG_STEPS) {
+        if (w >= 0 && w < SEQ_STEPS) {       /* an active step of the part: on or off (never all off) */
+            uint8_t m = (uint8_t)(set.pat.active[part] ^ (1u << w));
+            if (!m) {
+                app_say("ONE STEP", "STAYS ON");
+                return;
+            }
+            set.pat.active[part] = m;
+            set_dirty = 1;
+            {
+                char t[16] = "ACTIVE ", n[4];
+                int_text(w + 1, n);
+                text_cat(t, n);
+                app_say(t, m >> w & 1u ? "ON" : "OFF");
+            }
+        } else if (w < 0) {                  /* the clears, as v2's GATE TIME + 1..4 */
+            static const char *const C[4] = {"ALL", "SYNTH", "DRUMS", "ACTIVE"};
+            for (i = 0; i < 4; i++)
+                if (k == (uint32_t)(i == 0 ? 1 : i == 1 ? 3 : i == 2 ? 5 : 8)) {
+                    seq_clear(&set.pat, i);
+                    set_dirty = 1;
+                    app_say(i == 3 ? "RESET" : "CLEAR", C[i]);
+                }
+        }
     }
 }
 
@@ -535,31 +832,19 @@ static void input(void)
     touch_poll();                            /* the sensed keys' presses, velocities and pressure */
     keys = touch_keys();
     for (k = 0; k < NKEYS; k++) {            /* key 0 is F3 (MIDI 53) */
-        uint32_t bit = 1u << k, v;
+        uint32_t bit = 1u << k;
         int32_t note = 53 + (int32_t)k + 12 * set.octave;
-        if (ui.page == PG_DRUMS && (BLACK_KEYS & bit) && (keys & bit)) {   /* the DRUMS page's black keys (a key let
-                                                                             * go goes on: a note it held stops) */
-            int d = key_pad(k);
-            if (d >= 0 && (keys & bit) && !(ui.keys & bit)) {
-                drum(d);
-                plat_midi_send(0x09u | (0x90u | set.v[P_DRUM_CH]) << 8 | (uint32_t)DRUM_NOTE[d] << 16 | 100u << 24,
-                               TO_USB | TO_BLE);
-                plat_midi_send(0x08u | (0x80u | set.v[P_DRUM_CH]) << 8 | (uint32_t)DRUM_NOTE[d] << 16, TO_USB | TO_BLE);
-            }
-            continue;
-        }
         if ((keys & bit) && !(ui.keys & bit)) {
-            v = touch_vel(k);
-            ui.vel[k] = (uint8_t)v;
-            ui.prs[k] = 0;
-            ui.last_key = (int32_t)k;
-            key_down(note, v);
-            plat_midi_send(0x09u | (0x90u | set.v[P_SYNTH_CH]) << 8 | (uint32_t)note << 16 | v << 24, TO_USB | TO_BLE);
+            key_press(k, note);
         } else if (!(keys & bit) && (ui.keys & bit)) {
-            ui.prs[k] = 0;
-            key_up(note);
-            plat_midi_send(0x08u | (0x80u | set.v[P_SYNTH_CH]) << 8 | (uint32_t)note << 16, TO_USB | TO_BLE);
-        } else if ((keys & bit) && touch_pressure(k) != ui.prs[k]) {   /* pressure: poly aftertouch */
+            if (ui.key_synth & bit) {        /* a synth key let go */
+                ui.key_synth &= ~bit;
+                ui.prs[k] = 0;
+                key_up(note);
+                rec_note_off(note);
+                plat_midi_send(0x08u | (0x80u | set.v[P_SYNTH_CH]) << 8 | (uint32_t)note << 16, TO_USB | TO_BLE);
+            }
+        } else if ((keys & bit) && (ui.key_synth & bit) && touch_pressure(k) != ui.prs[k]) {   /* poly aftertouch */
             ui.prs[k] = touch_pressure(k);
             ui.redraw = 1;
             plat_midi_send(0x0Au | (0xA0u | set.v[P_SYNTH_CH]) << 8 | (uint32_t)note << 16 | (uint32_t)ui.prs[k] << 24,
@@ -576,9 +861,18 @@ static void input(void)
             octave_step(-1);
         else if (k == B_OCTUP)
             octave_step(1);
-        else if (k == B_REC && FM1B_BLE)
-            ui.rec_t = plat_ms();                /* a press: on release (a hold switches Bluetooth) */
-        else if (k == B_SAVE) {
+        else if (k == B_PLAY) {             /* PLAY: start from step 1, or stop */
+            int on = !seq_playing();
+            seq_play(on);
+            app_say(on ? "PLAY" : "STOP", "");
+        } else if (k == B_REC) {            /* REC: armed or not; armed, the keys and pads record while it plays */
+            rec_armed = (uint8_t)!rec_armed;
+            rec_slot = -1;
+            app_say("REC", rec_armed ? "ON" : "OFF");
+        } else if (k == B_SAVE && ui.page == PG_DEVICES) {   /* DEVICES: SAVE connects the pick, or lets it go */
+            int ev = btdev_save();
+            app_say(ev == BTDEV_CONNECTING ? btdev_word(ev) : "BLE", ev == BTDEV_CONNECTING ? btdev_name() : btdev_word(ev));
+        } else if (k == B_SAVE) {
             if (plat_store_save(OBJ_SETTINGS, &set, sizeof set) == 0) {
                 set_dirty = 0;
                 app_say("SAVED", "");
@@ -589,46 +883,36 @@ static void input(void)
             app_say("BUTTON", BTN_NAME[k]);
         }
     }
-    if (FM1B_BLE && ui.rec_t) {             /* REC: held a second, Bluetooth on / off; a press, a device */
-        if (btn >> B_REC & 1u) {
-            if (plat_ms() - ui.rec_t >= 1000u) {
-                ui.rec_t = 0;
-                ble_toggle();
-            }
-        } else {
-            ui.rec_t = 0;
-            if (FM1B_BLE_CENTRAL && !set.v[P_BLE])
-                ble_device_button();
-            else
-                app_say("BUTTON", "REC");
-        }
-    }
     for (k = 0; k < NE; k++) {               /* an encoder turned: a knob's value, the EG, the wave */
-        char t[12];
         if ((e = plat_enc((int)k)) == 0)
             continue;
         ui.turns[k] += e;
         ui.turned_at[k] = plat_ms();
         ui.redraw = 1;
-        if (k == EN_ALGO && FM1B_BLE_CENTRAL && ui.looking) {
-            btdev_choose(btdev_pick() + e);
-            ble_device_say();
-        } else if (k >= EN_K1 && PAGE[ui.page].p[k - EN_K1] >= 0) {
+        if (k >= EN_K1 && PAGE[ui.page].p[k - EN_K1] >= 0) {
             /* K1..K4: the page's settings; a knob a step a detent (three, turned fast), a switch a position */
-            int pn = PAGE[ui.page].p[k - EN_K1];
-            int32_t v = (int32_t)set.v[pn], hi = PAR[pn].nopt ? PAR[pn].nopt - 1 : 127;
-            v = clamp(v + (PAR[pn].nopt ? (e > 0 ? 1 : -1) : e > 1 || e < -1 ? 3 * e : e), 0, hi);
-            if (v != set.v[pn]) {
-                set.v[pn] = (uint8_t)v;
-                set_dirty = 1;
+            int pn = PAGE[ui.page].p[k - EN_K1], one = PAR[pn].nopt || pn == P_EDSTEP || pn == P_BLEDEV;
+            int32_t v = pget(pn), was = v;
+            if (pn == P_EDSTEP && !set.pat.steps16)   /* the step editor: steps only, in 8-step mode */
+                v = (v & ~1) + 2 * (e > 0 ? 1 : -1);
+            else
+                v += one ? (e > 0 ? 1 : -1) : e > 1 || e < -1 ? 3 * e : e;
+            v = clamp(v, PAR[pn].lo, pmax(pn));
+            if (v != was) {
+                pset(pn, v);
+                if (pn != P_EDSTEP && pn != P_BLEDEV)
+                    set_dirty = 1;
                 engine_update();
                 if (pn == P_BLE && FM1B_BLE)
                     plat_ble_enable(!set.v[P_BLE]);
                 if (pn == P_SYNTH_CH && voice_note >= 0)   /* (its note off would go out on the new channel) */
                     note_off(voice_note), nheld = 0;
             }
-            param_text(pn, t);
-            app_say(PAR[pn].name, t);
+            {
+                char m[24];
+                param_text(pn, m);
+                app_say(PAR[pn].name, m);
+            }
         }
     }
     if (keys != ui.keys || btn != ui.btn)
@@ -726,7 +1010,7 @@ static void draw(void)
                 continue;                    /* one tab a button */
             b = PAGE[i].button;
             t[0] = 0;
-            text_cat(t, PAGE[i].name);
+            text_cat(t, PAGE[i].tab);
             cell(4 + (int32_t)nt * tw, 0, tw - 2, t, PAGE[ui.page].button == b);
             cv_text(4 + (int32_t)nt * tw + (tw - 2 - text_w(&FONT_XS, BTN_NAME[b])) / 2, 20, &FONT_XS, BTN_NAME[b], C_DIM);
             nt++;
@@ -753,6 +1037,32 @@ static void draw(void)
             cv_text(x + (w - text_w(&FONT_XS, t)) / 2, 65, &FONT_XS, t, lit ? C_WHITE : C_AMB);
         }
     }
+    if (PAGE[ui.page].button == B_SEQ) {
+        /* the pattern: a row a part (the part edited lit), 16 slots, the steps in pairs: a slot that plays filled,
+         * one in an active step outlined, the playhead white; the step editor's slot marked under the synth's row */
+        uint32_t r, c;
+        for (r = 0; r < SEQ_NPART; r++) {
+            int32_t y = 98 + (int32_t)r * 11, sl = seq_slot((int)r);
+            cv_text(4, y, &FONT_XS, PART_OPT[r], r == set.v[P_PART] ? C_HI : C_GRAY);
+            for (c = 0; c < SEQ_SLOTS; c++) {
+                int32_t x = 46 + (int32_t)c * 12 + (int32_t)(c / 2u) * 0;
+                int act = set.pat.active[r] >> (c / 2u) & 1u, on = set.pat.on[r] >> c & 1u;
+                int dead = r == SEQ_SYNTH && !set.pat.steps16 && (c & 1u);
+                uint16_t col = (int32_t)c == sl ? C_WHITE : on && !dead ? (c & 1u ? C_AMB : C_HI) : act && !dead ? C_LINE
+                                                                                                          : C_BLACK;
+                cv_rect(x, y + 1, c & 1u ? 8 : 10, 8, col);
+                if (!act && !dead)
+                    cv_rect(x + 3, y + 4, 3, 2, C_LINE);
+            }
+        }
+        if (ui.page == PG_EDIT)
+            cv_rect(46 + (int32_t)ed_slot * 12, 141, 10, 2, C_WHITE);
+    } else if (ui.page == PG_DEVICES) {
+        char ti[32];
+        btdev_title(ti);
+        cv_text(4, 100, &FONT_XS, ti, C_GRAY);
+        cv_text(4, 116, &FONT_XS, btdev_busy() ? "SAVE LETS IT GO" : "TURN K1 TO PICK, SAVE CONNECTS", C_DIM);
+    } else {
     cv_text(4, 108, &FONT_XS, "DRUMS", C_GRAY);
     for (i = 0; i < TRIBE_NDRUM; i++) {
         int lit = ui.drum_at[i] && now - ui.drum_at[i] < 150u;
@@ -762,6 +1072,7 @@ static void draw(void)
             cv_text(44 + (int32_t)i * 46 + (44 - text_w(&FONT_XS, KN[i])) / 2, 125, &FONT_XS, KN[i],
                     ui.page == PG_DRUMS ? C_AMB : C_DIM);
         }
+    }
     }
     cv_blit(0, 36);
     /* the keys, black above white: a held key fills to its velocity (amber), its pressure over that (white) */
@@ -775,6 +1086,16 @@ static void draw(void)
     octave_text(t);
     cv_text(4, 36, &FONT_XS, "OCT", C_GRAY);
     cv_text(30, 36, &FONT_XS, t, C_HI);
+    {                                        /* the transport: PLAY or STOP, the tempo (MIDI: the clock's), REC */
+        int32_t x = cv_text(64, 36, &FONT_XS, seq_playing() ? "PLAY" : "STOP", seq_playing() ? C_WHITE : C_GRAY);
+        if (set.v[P_SYNC])
+            t[0] = 0, text_cat(t, "MIDI");
+        else
+            int_text(set.v[P_TEMPO], t);
+        x = cv_text(x + 6, 36, &FONT_XS, t, C_AMB);
+        if (rec_armed)
+            cv_text(x + 8, 36, &FONT_XS, "REC", C_HI);
+    }
     if (midi_count) {                        /* the last MIDI message in, and where from */
         static const char *const PORT[NPORTS] = {"USB", "BLE", "TRS"};
         static const char HEX[] = "0123456789ABCDEF";
@@ -818,12 +1139,12 @@ void app_frame(void)
         lit_until = 0;
         ui.redraw = 1;
     }
-    if (FM1B_BLE_CENTRAL) {                  /* looking: a device found is named at once (REC connects to it) */
+    if (FM1B_BLE_CENTRAL) {                  /* DEVICES: it scans while the page is up; a device found is shown */
         static int found;
-        int n = ui.looking ? btdev_count() : 0, ev;
-        btdev_page(ui.looking && !set.v[P_BLE]);
-        if (n > found && btdev_pick() < n)
-            ble_device_say();
+        int up = ui.page == PG_DEVICES && !set.v[P_BLE], n = up ? btdev_count() : 0, ev;
+        btdev_page(up);
+        if (n != found)
+            ui.redraw = 1;
         found = n;
         while ((ev = btdev_event()) != BTDEV_NONE)   /* a device connected, given up or lost */
             if (ev == BTDEV_CONNECTED || ev == BTDEV_NO_ANSWER || ev == BTDEV_LOST)
@@ -832,6 +1153,15 @@ void app_frame(void)
     if (midi_count != last_midi) {
         last_midi = midi_count;
         ui.redraw = 1;
+    }
+    {                                        /* the playhead moved, or the transport changed: on screen */
+        static int32_t last_pos = -2;
+        int32_t p = seq_playing() * 1000 + seq_slot(0) + 16 * seq_slot(1) + 256 * seq_slot(2) + 4096 * seq_slot(3);
+        if (p != last_pos) {
+            last_pos = p;
+            if (PAGE[ui.page].button == B_SEQ || !seq_slot(0) || seq_slot(0) < 0)
+                ui.redraw = 1;
+        }
     }
     {                                        /* a drum hit: its pad lights, then goes out */
         static uint32_t knobs_seen, drum_off;
@@ -873,16 +1203,35 @@ int app_expect(const char *what, int *got)
 {
     static const char *const P[NP] = {"cutoff", "peak", "wave", "noise", "eg", "level", "rhythm", "rate", "int",
                                       "target", "mode", "lwave", "synth_ch", "drum_ch", "ble_off", "bd_dec", "sn_dec",
-                                      "hh_dec", "keylight", "glow"};
+                                      "hh_dec", "keylight", "glow", "tempo", "part", "gate", "swing", "sync",
+                                      "clkout", "steps16", "edstep", "ednote", "edgate", "edon", "bledev"};
     int i;
     for (i = 0; i < NP; i++)                 /* a setting by its name: its 0..127, or its switch's position */
         if (!strcmp(what, P[i])) {
-            *got = set.v[i];
+            *got = pget(i);
             return 1;
         }
+    /* the pattern: onN (part N's slots, bits), activeN, noteN and gateN (slot N); playing, rec, slotN (part N) */
+    if (!strncmp(what, "on", 2) && what[2] >= '0' && what[2] <= '9')
+        *got = set.pat.on[atoi(what + 2) % SEQ_NPART];
+    else if (!strncmp(what, "active", 6))
+        *got = set.pat.active[atoi(what + 6) % SEQ_NPART];
+    else if (!strncmp(what, "note", 4) && what[4] >= '0' && what[4] <= '9')
+        *got = set.pat.note[atoi(what + 4) % SEQ_SLOTS];
+    else if (!strncmp(what, "gate", 4) && what[4] >= '0' && what[4] <= '9')
+        *got = set.pat.gate[atoi(what + 4) % SEQ_SLOTS];
+    else if (!strcmp(what, "playing"))
+        *got = seq_playing();
+    else if (!strcmp(what, "rec"))
+        *got = rec_armed;
+    else if (!strncmp(what, "slot", 4))
+        *got = seq_slot(atoi(what + 4) % SEQ_NPART);
+    else if (!strcmp(what, "mid_keys"))
+        *got = (int)mid_keys_now;
+    else
     if (!strcmp(what, "octave"))
         *got = set.octave;
-    else if (!strcmp(what, "page"))         /* PG_*: 0 VCO VCF, 1 EG VCA, 2 LFO 1, 3 LFO 2, 4 DRUMS, 5 GLOBAL 1, 6 2 */
+    else if (!strcmp(what, "page"))         /* PG_*: VCF 0, VCA 1, LFO 2 3, DRUMS 4, SEQ 5 6 7, GLOBAL 8 9 10 */
         *got = ui.page;
     else if (!strcmp(what, "note"))
         *got = voice_note;
