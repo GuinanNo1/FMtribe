@@ -46,7 +46,8 @@ UI (0.4): pages on buttons (app.c PAGE[]), HOME first (the start page, 1/2: LEVE
 right: a button shows its first page,
 pressed again its next; K1–K4 edit the page; the header shows the page name (left, in place of the app name) and x/y (right). ENV VCO 1/2 (NOISE
 RANGE; RANGE WIDE/NARROW = slow/fast glide (tribe glide, legato only; times GUESS), KEY none) and VCF VCA 2/2 (CUTOFF PEAK LEVEL EG); LFO (RATE INT TARGET
-MODE); ARP DRUMS (RHYTHM, BD/SN/HH DECAY = a hardware mod, not stock; keys play the synth, no pads); SEQ STEP 1/2 (TEMPO SWING STEPS GATE) and
+MODE); ARP DRUMS (RHYTHM, BD/SN/HH DECAY = a hardware mod, not stock; F#3 G#3 A#3 = BD SN HH pads, recorded with REC;
+every other key plays the synth); SEQ STEP 1/2 (TEMPO SWING STEPS GATE) and
 EDIT 2/2 (STEP NOTE GATE ON, piano roll); GLO MIDI 1/3 (SYNTH CH DRUM CH SYNC CLOCK OUT), GLOBAL 2/3 (BLE MIDI, KEY
 LIGHT, GLOW, PREVIEW = DRUM PREVIEW, default on), DEVICES 3/3 (K1 picks, SAVE connects/lets go; scans while the page is up). Constant everywhere: OCT-/+
 the octave; SELECT the VCO WAVE (on SEQ pages the step cursor ed_slot); ALGO the LFO WAVE on LFO; PRESET the part on SEQ

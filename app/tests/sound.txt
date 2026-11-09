@@ -118,25 +118,42 @@ turn K1 100 20
 key 12 up
 wait 200
 wavstop
-# the drums: the DRUMS page (ARP): RHYTHM and the decays; MIDI channel 10 (36, 40, 42) plays them, and a pad on the
-# screen lights as each hits. The keys play the synth there, black and white
+# the drums: the DRUMS page (ARP): RHYTHM and the decays; the first three black keys, F#3 G#3 A#3 (keys 1 3 5), play
+# BD SN HH and glow; every other key plays the synth, black or white. MIDI channel 10 (36, 40, 42) plays them too,
+# and a pad on the screen lights as each hits
 tap ARP
 wait 30
 expect page 5
 turn K1 -10
 expect rhythm 80
-expect dim_keys 0
+expect dim_keys 42
+out
 key 1 down
 wait 30
-expect note 54
+expect note -1
 key 1 up
+key 3 down
+wait 30
+key 3 up
+key 5 down
+wait 30
+key 5 up
+wait 30
+expect_out USB 99 24 64
+expect_out USB 99 28 64
+expect drum0 1
+expect drum1 1
+expect drum2 1
+key 13 down
+wait 30
+expect note 66
+key 13 up
 wait 30
 key 0 down
 wait 30
 expect note 53
 key 0 up
 wait 100
-out
 wav drums.wav
 midi 99 24 64
 wait 30
@@ -148,9 +165,9 @@ midi 99 2A 64
 wait 200
 midi 99 2B 64
 wait 200
-expect drum0 1
-expect drum1 1
-expect drum2 1
+expect drum0 2
+expect drum1 2
+expect drum2 2
 wavstop
 # the decay mods: BD DECAY up, a longer kick
 turn K2 40
@@ -214,10 +231,10 @@ expect note 48
 midi 81 30 00
 midi 9A 24 64
 wait 50
-expect drum0 3
+expect drum0 4
 midi 99 24 64
 wait 50
-expect drum0 3
+expect drum0 4
 out
 key 2 down
 wait 30
