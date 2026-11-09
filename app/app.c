@@ -14,7 +14,7 @@
 /* every setting the panel edits, by number: a knob's 0..127, or a switch's position (its OPT names) */
 enum { P_CUTOFF, P_PEAK, P_WAVE, P_NOISE, P_EG, P_LEVEL, P_RHYTHM, P_LRATE, P_LINT, P_LTARGET, P_LMODE, P_LWAVE,
        P_SYNTH_CH, P_DRUM_CH, P_BLE, P_BD_DEC, P_SN_DEC, P_HH_DEC, P_KEYLIGHT, P_GLOW,
-       P_TEMPO, P_PART, P_GATE, P_SWING, P_SYNC, P_CLKOUT, P_RANGE,
+       P_TEMPO, P_PART, P_GATE, P_SWING, P_SYNC, P_CLKOUT, P_RANGE, P_BD_LVL, P_SN_LVL, P_HH_LVL,
        NSAVED,                                   /* the settings saved; after them, what the knobs edit elsewhere: */
        P_STEPS16 = NSAVED,                       /* the pattern's 16-step synth */
        P_EDSTEP, P_EDNOTE, P_EDGATE, P_EDON,     /* the step editor: its slot, and that slot's note, gate, on */
@@ -70,6 +70,9 @@ static const param_t PAR[NP] = {
     {"SYNC", 2, SYNC_OPT, 0, 0, 0},            /* the internal tempo, or MIDI clock in */
     {"CLOCK OUT", 2, OFFON_OPT, 1, 0, 0},      /* MIDI clock, start and stop out */
     {"RANGE", 3, RANGE_OPT, 2, 0, 0},          /* the ribbon's range (WIDE and NARROW not yet: the keys play KEY) */
+    {"BD LEVEL", 0, 0, 100, 0, 0},             /* each drum's level: 100 the stock mix (RHYTHM over all three) */
+    {"SN LEVEL", 0, 0, 100, 0, 0},
+    {"HH LEVEL", 0, 0, 100, 0, 0},
     {"STEPS", 2, STEPS_OPT, 0, 0, 0},          /* (the pattern's) */
     {"STEP", 0, 0, 0, 0, 15},
     {"NOTE", 0, 0, 60, 0, 0},
@@ -88,8 +91,11 @@ typedef struct {
 /* the pages, after the monotribe's panel: ENV the VCO, then the VCF and VCA; LFO; ARP the drums; SEQ the step row (on
  * the keys) and the step editor; GLO the MIDI, Bluetooth and lights. SELECT is the VCO's WAVE (on SEQ, the step
  * cursor), ALGO the LFO's WAVE on LFO, OCT- / OCT+ the octave everywhere */
-enum { PG_VCO, PG_VCF, PG_LFO, PG_DRUMS, PG_SEQ, PG_EDIT, PG_GLOBAL, PG_GLOBAL2, PG_DEVICES, NPG };
+enum { PG_HOME, PG_HOME2, PG_VCO, PG_VCF, PG_LFO, PG_DRUMS, PG_SEQ, PG_EDIT, PG_GLOBAL, PG_GLOBAL2, PG_DEVICES, NPG };
 static const page_t PAGE[NPG] = {
+    /* HOME, the start page: each instrument's level; then the tempo and the filter */
+    {"LEVELS", "HOME", B_HOME, {P_LEVEL, P_BD_LVL, P_SN_LVL, P_HH_LVL}},
+    {"TEMPO VCF", "HOME", B_HOME, {P_TEMPO, P_CUTOFF, P_PEAK, -1}},
     {"VCO", "VCO", B_ENV, {P_NOISE, P_RANGE, -1, -1}},
     {"VCF VCA", "VCO", B_ENV, {P_CUTOFF, P_PEAK, P_LEVEL, P_EG}},
     {"LFO", "LFO", B_LFO, {P_LRATE, P_LINT, P_LTARGET, P_LMODE}},
@@ -103,7 +109,7 @@ static const page_t PAGE[NPG] = {
     {"DEVICES", "GLO", B_GLO, {P_BLEDEV, -1, -1, -1}},   /* SAVE connects the pick, or lets it go (lib/btdev) */
 };
 
-#define SET_MAGIC 0x37544D46u            /* "FMT7": the settings record; another magic loads defaults */
+#define SET_MAGIC 0x38544D46u            /* "FMT8": the settings record; another magic loads defaults */
 typedef struct {
     uint32_t magic;
     int8_t octave;                       /* -3 .. +2: six positions, as the monotribe's 64' .. 2' */
@@ -202,6 +208,9 @@ static void engine_update(void)          /* the settings to the engine */
     p.decay[0] = fm_exp2f(((float)set.v[P_BD_DEC] - 32.0f) / 24.0f);   /* 32 stock; 0 x0.4 .. 127 x15 */
     p.decay[1] = fm_exp2f(((float)set.v[P_SN_DEC] - 32.0f) / 24.0f);
     p.decay[2] = fm_exp2f(((float)set.v[P_HH_DEC] - 32.0f) / 24.0f);
+    p.drum_lvl[0] = set.v[P_BD_LVL] / 100.0f;    /* 100 the stock mix, 127 ~+2 dB */
+    p.drum_lvl[1] = set.v[P_SN_LVL] / 100.0f;
+    p.drum_lvl[2] = set.v[P_HH_LVL] / 100.0f;
     tribe_set(&p);
     seq_tempo((float)set.v[P_TEMPO] * (half_tempo ? 0.5f : 1.0f));
     seq_swing((float)set.v[P_SWING] / 127.0f);
@@ -1336,7 +1345,7 @@ static void draw(void)
 void app_ui_init(void)
 {
     touch_on(1);                             /* velocity and pressure: the keys' readings on */
-    ui.page = PG_VCF;                        /* the first page at each start */
+    ui.page = PG_HOME;                        /* the first page at each start */
     lcd_fill(0, 0, 240, 240, C_BLACK);
     ui.redraw = 1;
 }
@@ -1419,7 +1428,7 @@ int app_expect(const char *what, int *got)
     static const char *const P[NP] = {"cutoff", "peak", "wave", "noise", "eg", "level", "rhythm", "rate", "int",
                                       "target", "mode", "lwave", "synth_ch", "drum_ch", "ble_off", "bd_dec", "sn_dec",
                                       "hh_dec", "keylight", "glow", "tempo", "part", "gate", "swing", "sync",
-                                      "clkout", "range", "steps16", "edstep", "ednote", "edgate", "edon", "bledev"};
+                                      "clkout", "range", "bd_lvl", "sn_lvl", "hh_lvl", "steps16", "edstep", "ednote", "edgate", "edon", "bledev"};
     int i;
     for (i = 0; i < NP; i++)                 /* a setting by its name: its 0..127, or its switch's position */
         if (!strcmp(what, P[i])) {
@@ -1446,7 +1455,7 @@ int app_expect(const char *what, int *got)
     else
     if (!strcmp(what, "octave"))
         *got = set.octave;
-    else if (!strcmp(what, "page"))         /* PG_*: VCO 0, VCF VCA 1, LFO 2, DRUMS 3, STEP 4, EDIT 5, GLO 6 7 8 */
+    else if (!strcmp(what, "page"))         /* PG_*: HOME 0 1, VCO 2, VCF VCA 3, LFO 4, DRUMS 5, STEP 6, EDIT 7, GLO 8 9 10 */
         *got = ui.page;
     else if (!strcmp(what, "gate_live"))    /* GATE TIME's gate (-1 none), GATE TIME HOLD, HALF TEMPO */
         *got = gate_val;

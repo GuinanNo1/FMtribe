@@ -22,10 +22,12 @@ To go back to M-VAVE's firmware, or to another one, open the same installer and 
 ## 3. Play
 
 Press a page button, then turn K1 to K4 to edit that page. Press the button again for its next page; the header
-shows which one, such as VCF VCA 2/2.
+shows which one, such as LEVELS 1/2. FMtribe starts on HOME.
 
 | Page (button) | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
+| LEVELS 1/2 (HOME) | LEVEL | BD LEVEL | SN LEVEL | HH LEVEL |
+| TEMPO VCF 2/2 (HOME) | TEMPO | CUTOFF | PEAK | |
 | VCO 1/2 (ENV) | NOISE | RANGE | | |
 | VCF VCA 2/2 (ENV) | CUTOFF | PEAK | LEVEL | EG |
 | LFO (LFO) | RATE | INT | TARGET | MODE |

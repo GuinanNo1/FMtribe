@@ -42,10 +42,10 @@ expect peak_db_min -30
 midi 80 3C 00
 listen
 wait 100
-said FMTRIBE. OCTAVE +1. VCF VCA 2/2. CUTOFF 80. PEAK 30. LEVEL 100. EG DECAY
-tap HOME
+said FMTRIBE. OCTAVE +1. LEVELS 1/2. LEVEL 100. BD LEVEL 100. SN LEVEL 100. HH LEVEL 100
+tap FX
 wait 30
-said BUTTON HOME
+said BUTTON FX
 # MASTER turned while a note plays: the gain glides, so no sample jumps further than the wave itself does
 midi 90 45 64
 wait 100
@@ -77,7 +77,7 @@ wait 1200
 tap GLO
 tap GLO
 wait 30
-expect page 7
+expect page 9
 turn K1 1
 wait 50
 said BLE MIDI OFF
@@ -98,7 +98,7 @@ expect ble 2
 # lets it go (lib/btdev)
 tap GLO
 wait 700
-expect page 8
+expect page 10
 expect bledev 0
 shot devices.png
 tap SAVE
