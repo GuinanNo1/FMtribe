@@ -52,14 +52,16 @@ EDIT 2/2 (STEP NOTE GATE ON, piano roll); GLO MIDI 1/3 (SYNTH CH DRUM CH SYNC CL
 LIGHT, GLOW, PREVIEW = DRUM PREVIEW, default on), DEVICES 3/3 (K1 picks, SAVE connects/lets go; scans while the page is up). Constant everywhere: OCT-/+
 the octave; SELECT the VCO WAVE (on SEQ pages the step cursor ed_slot); ALGO the LFO WAVE on LFO; PRESET the part on SEQ
 pages (part_pick; also the black part keys on STEP). EDIT edits the picked part: synth piano roll, or a drum's 16
-slots (cursor by slot, K4 ON its hits, NOTE/GATE '-'). SEL, EDIT free (the user will assign SEL later); FX
-planned as the drum rolls button. Keep to the monotribe's controls (no per-drum levels: RHYTHM only). Settings are PAR[] (knob 0..127 or switch), saved as "FMT8" with
+slots (cursor by slot, K4 ON its hits, NOTE/GATE '-'). SEL, EDIT free (the user will assign SEL later). FX and F#5 (KEY_ROLL, on DRUMS and STEP)
+toggle ROLL: DRUMS pads roll while held at ROLL RATE (ALGO on DRUMS, 8th..128th); on STEP with a drum part and playing,
+GATE TIME + white key = roll (Ver.2), stops on GATE release. seq_roll_live (free-running when stopped);
+pat.roll[drum][step] recorded with REC, played through the step; INITIALIZE RHYTHM/ALL clear. Keep to the monotribe's controls (no per-drum levels: RHYTHM only). Settings are PAR[] (knob 0..127 or switch), saved as "FMT9" with
 the pattern. pget/pset reach pattern-backed settings (STEPS, EDIT's STEP/NOTE/GATE/ON) and the BLE device pick (NSAVED).
 Sequencer (0.3, UI 0.4): app/seq/seq.c (o2), tests/host/seq_test.c, app/tests/seq.txt. 8 steps x 2 slots, parts
 SYNTH/BD/SN/HH, per-part active steps, gate per synth slot (127 tie), 16-step synth, swing, 96 ppqn ticks in the
 audio interrupt (app_render splits the block at ticks and sample-timed note offs), MIDI clock in (SYNC MIDI, 4 ticks
-a clock) and out; seq_gate_live (GATE TIME). STEP is the monotribe's step row on the keys: white keys 1-8 (9-16 with
-16-STEP SYNTH) are the step buttons and their lights the step LEDs (off: inactive/past 8; dim: active, empty; mid:
+a clock) and out; seq_gate_live (GATE TIME). STEP is the monotribe's step row on the keys: 8-step parts spread, step s on white key 2s (blank keys between;
+key_step), the 16-step synth on all 16 white keys; they are the step buttons and their lights the step LEDs (off: inactive/past 8; dim: active, empty; mid:
 note/hit; lit: playhead, or the synth cursor when stopped). Black: F#3 G#3 A#3 C#4 = BD SN HH SYNTH (hold a drum's
 key + step = half-step), D#4 ACTIVE STEP (hold + steps), F#4 GATE TIME: held while playing, white keys are a ribbon
 (left 1.4 %, right 127/tie), recorded into each synth step with REC; held while stopped, the v2 multi-function key
@@ -70,7 +72,7 @@ LEVEL turned while recording is recorded too; MOTION switch plays them back. REC
 armed, keys play+record synth on any page (on STEP the white keys); on STEP the BD/SN/HH part keys play+record
 drums (pad()). Manual section 4
 "Setting gate times" documents the gate methods. Manual screenshots: app/tests/screens.txt -> app/docs/img.
-Not yet: Flux, drum rolls (Ver.2: GATE TIME + ribbon with a drum part; FX planned too).
+Not yet: Flux.
 LFO (0.3): tribe.c, rates from the manual; depth (±1 oct pitch, ±3 oct cutoff), INT square-law taper, 1SHOT on the
 SLOW range and the falling saw are GUESSES.
 Next: user testing in the emulator; then Flux (continuous synth recording), drum rolls, ribbon modes.

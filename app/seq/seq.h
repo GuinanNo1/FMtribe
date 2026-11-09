@@ -17,12 +17,15 @@ enum { SEQ_SYNTH, SEQ_BD, SEQ_SN, SEQ_HH, SEQ_NPART };
 #define SEQ_TPS 24                       /* ticks a step (a 16th note at 96 ppqn) */
 #define SEQ_GATE_TIE 127                 /* gate 127: 100 %, the note runs on into the next */
 #define SEQ_NO_VOL 255                   /* a slot with no MOTION VOLUME recorded */
+#define SEQ_NROLL 7                      /* roll rates: 1 8ths, 2 16ths, 3 16th triplets, 4 32nds, 5 32nd triplets,
+                                          * 6 64ths, 7 128ths (Ver.2's, left to right along the ribbon) */
 
 typedef struct {
     uint8_t note[SEQ_SLOTS];             /* the synth's note at each slot (MIDI) */
     uint8_t gate[SEQ_SLOTS];             /* and its gate time, 0 (1.4 % of the step) .. 127 (100 %, tied) */
     uint16_t on[SEQ_NPART];              /* the slots that play, per part (bit = slot) */
     uint8_t active[SEQ_NPART];           /* the active steps, per part (bit = step; never all off) */
+    uint8_t roll[3][SEQ_STEPS];          /* drum rolls (Ver.2): BD SN HH, each step's roll rate (1..SEQ_NROLL; 0 none) */
     uint8_t vol[SEQ_SLOTS];              /* MOTION VOLUME: the synth's level at each slot, 0..127 (SEQ_NO_VOL: none) */
     uint8_t steps16;                     /* the synth's half slots play too (v2 16-step synth) */
     uint8_t rsv;
@@ -47,6 +50,9 @@ void seq_clock_out(int on);              /* send MIDI clock, start and stop */
 /* GATE TIME played live (the monotribe's GATE TIME button and ribbon): every synth note's gate from now on, 0 .. 127
  * as the pattern's, instead of its own; -1 the pattern's again */
 void seq_gate_live(int gate);
+/* a drum rolled live (a DRUMS pad held with ROLL on, or GATE TIME and a key with a drum part): part SEQ_BD..SEQ_HH
+ * hits at once and then every roll interval, at the tempo, playing or stopped; rate 0 stops it */
+void seq_roll_live(int part, int rate);
 
 /* transport (either side) */
 void seq_play(int on);                   /* from step 1 */

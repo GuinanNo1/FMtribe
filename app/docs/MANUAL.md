@@ -82,7 +82,7 @@ Three controls do the same job on every page:
 | --- | --- |
 | OCT− · OCT+ | The octave, in six steps from −3 to +2, as the monotribe's six octave positions. |
 | SELECT | The VCO's WAVE: saw, triangle or square. On the SEQ pages, it moves the step cursor instead. |
-| ALGO | On the LFO page, the LFO's WAVE: saw, triangle, square or S&H. |
+| ALGO | On the LFO page, the LFO's WAVE: saw, triangle, square or S&H. On DRUMS, the ROLL RATE. |
 | PRESET | On the SEQ pages, the part you're editing: SYNTH, BD, SN or HH. |
 
 ![The VCO page, ENV 1/2](img/screen-vco.png "The VCO page") ![The LFO page](img/screen-lfo.png "The LFO page")
@@ -120,7 +120,8 @@ Three controls do the same job on every page:
 | MASTER | Sets the volume. |
 | SAVE | Saves every setting, the octave and the pattern. SAVE lights while there's something to save. On the DEVICES page, SAVE connects to a Bluetooth MIDI device instead. |
 | PLAY · REC | Start and stop the sequencer; record into it. See The sequencer. |
-| SEL · EDIT · FX | Show their names, and do nothing else yet. PRESET does nothing off the SEQ pages. |
+| FX | ROLL on or off: see Drum rolls. FX lights while ROLL is on. |
+| SEL · EDIT | Show their names, and do nothing else yet. PRESET does nothing off the SEQ pages. |
 
 ### The drums
 
@@ -131,6 +132,21 @@ the drums too, as the monotribe's part buttons do.
 
 The BD, SN and HH DECAY knobs aren't on a stock monotribe, which has only RHYTHM for the drums. They copy a popular
 hardware mod; at 32, each drum sounds as stock.
+
+#### Drum rolls
+
+The monotribe Ver.2 can roll a drum: hits repeated fast, from 8th notes to 128th notes, in time with the tempo.
+FMtribe rolls two ways:
+
+- **On DRUMS, with ROLL.** Press FX, or the rightmost black key (F♯5), to turn ROLL on; FX and F♯5 light. Now a
+  pad rolls its drum for as long as you hold it, playing or stopped. ALGO sets the rate: 8TH, 16TH, 16T (16th
+  triplets), 32ND, 32T, 64TH or 128TH. Press FX or F♯5 again for single hits.
+- **On STEP, the Ver.2 way.** Pick a drum (F♯3, G♯3 or A♯3, or PRESET) and, while the pattern plays, hold GATE TIME
+  (F♯4) and touch the white keys: the leftmost rolls in 8ths, the rightmost in 128ths. The roll stops when you let
+  go of GATE TIME. With the synth picked, GATE TIME sets gate times instead.
+
+With REC on, a roll is recorded into each step of its drum as the pattern passes, and plays back from then on.
+INITIALIZE RHYTHM and INITIALIZE ALL clear the rolls with the drums.
 
 ### The sequencer
 
@@ -145,35 +161,39 @@ PLAY starts the pattern from step 1 and stops it. PLAY lights green while it pla
 ![STEP: the pattern, a row a part, with the step cursor under the synth's row](img/screen-step.png "The STEP page")
 
 On STEP (SEQ, 1/2), the keys become the monotribe's row of buttons. The white keys are the step buttons, and their
-lights are the step LEDs. The black keys are the buttons beside them.
+lights are the step LEDs. The black keys are the buttons beside them. An 8-step part is spread over the whole
+keyboard, with a blank white key between each step and the next; with 16-STEP SYNTH, the synth uses every white key.
 
 | Key | Monotribe button | What it does |
 | --- | --- | --- |
-| White keys F3 to F4 (the first eight) | Steps 1–8 | Switch the part's step on or off. A synth step switched on takes the last note you played. |
-| White keys G4 to G5 (the next eight) | Steps 9–16 | With 16-STEP SYNTH, the synth's steps 9 to 16. |
+| White keys F3, A3, C4, E4, G4, B4, D5, F5 | Steps 1–8 | Switch the part's step on or off. A synth step switched on takes the last note you played. The white keys between them do nothing. |
+| All 16 white keys, F3 to G5 | Steps 1–16 | With 16-STEP SYNTH and the synth picked, each white key is a step. |
 | F♯3 · G♯3 · A♯3 | BD · SN · HH | Pick the part, and play its drum (with PREVIEW on). Hold one and press a step for a hit half-way through that step. |
 | C♯4 | SYNTH | Pick the synth part. PRESET picks the part too. |
 | D♯4 | ACTIVE STEP | Stopped, hold it and press steps to switch them on or off for playback; one step always stays on. While the pattern plays, hold it and touch the white keys for MOTION VOLUME. |
-| F♯4 | GATE TIME | Hold it and touch the white keys to set gate times; stopped, it's the multi-function key. See Setting gate times. |
+| F♯4 | GATE TIME | Hold it and touch the white keys to set gate times (with a drum picked, to roll it); stopped, it's the multi-function key. See Setting gate times and Drum rolls. |
+| F♯5 | — | ROLL on or off, as FX. |
 
 With KEY LIGHT on GUIDE, the white keys show the part, as the monotribe's step LEDs do:
 
 | Light | Meaning |
 | --- | --- |
-| Off | A step that doesn't play: switched off with ACTIVE STEP, or past step 8 (unless 16-STEP SYNTH is on). |
+| Off | A step that doesn't play (switched off with ACTIVE STEP), and the blank keys between the steps. |
 | Dim | An active step with nothing on it. |
 | Half-lit | A step with a note or a hit. |
 | Lit | The step playing now. Stopped, on the synth part, the step cursor. |
 
 While you hold ACTIVE STEP, the active steps are lit instead. The part keys glow, with the part you're editing lit.
-ACTIVE STEP and GATE TIME glow; GATE TIME stays lit while GATE TIME HOLD is on.
+ACTIVE STEP, GATE TIME and ROLL (F♯5) glow; GATE TIME stays lit while GATE TIME HOLD is on, and F♯5 while ROLL
+is on. The free black keys stay dark.
 
 The knobs on STEP set TEMPO (10 to 600 BPM), SWING (every second step later, from straight, 50 %, to a triplet
 feel, 67 %), STEPS (8 or 16, the same as 16-STEP SYNTH) and GATE, the gate time a new synth step gets.
 
 #### The multi-function key
 
-When the sequencer is stopped, hold GATE TIME (F♯4) and press a step key, as on the monotribe Ver.2:
+When the sequencer is stopped, hold GATE TIME (F♯4) and press a step key (F3, A3, C4, E4, G4, B4, D5 or F5 for steps
+1 to 8), as on the monotribe Ver.2:
 
 | Step | Function |
 | --- | --- |

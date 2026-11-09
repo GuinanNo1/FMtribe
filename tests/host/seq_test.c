@@ -157,6 +157,26 @@ int main(void)
     seq_play(0);
     run(10);
 
+    printf("Drum rolls\n");
+    fresh();
+    seq_roll_live(SEQ_SN, 2);                    /* stopped: 16ths at 120, a hit at once */
+    run((uint32_t)(step * 4 + 100));
+    seq_roll_live(SEQ_SN, 0);
+    run((uint32_t)(step * 2));
+    CHECK(count('D', SEQ_SN, 0, 1u << 30) == 5, "a live roll of 16ths, stopped, over 4 steps: %d hits (5)", count('D', SEQ_SN, 0, 1u << 30));
+    a = nth('D', SEQ_SN, 0);
+    b = nth('D', SEQ_SN, 4);
+    CHECK(a >= 0 && ev[a].t < 10 && fabs((ev[b].t - ev[a].t) / 4.0 - step) < 2.0, "its first hit at once, then a step apart: %.1f", (ev[b].t - ev[a].t) / 4.0);
+    fresh();
+    P.on[SEQ_HH] = 1u;                           /* HH on step 1, rolled in 32nds; step 2 rolled with no hit set */
+    P.roll[SEQ_HH - SEQ_BD][0] = 4;
+    P.roll[SEQ_HH - SEQ_BD][1] = 1;
+    seq_play(1);
+    run((uint32_t)(step * 2 - 50));
+    CHECK(count('D', SEQ_HH, 0, 1u << 30) == 3, "recorded: step 1 in 32nds (2 hits), step 2 in 8ths (1): %d (3)", count('D', SEQ_HH, 0, 1u << 30));
+    seq_play(0);
+    run(10);
+
     printf("Swing\n");
     fresh();
     P.on[SEQ_BD] = 0x5555u;

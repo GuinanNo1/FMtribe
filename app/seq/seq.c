@@ -10,6 +10,10 @@ static seq_pattern_t *pat;
 static volatile uint8_t playing, req;            /* req: 1 play (from step 1), 2 stop, 3 continue: taken by the render */
 static volatile uint8_t ext, clk_out;
 static volatile int16_t gate_live = -1;          /* GATE TIME held: the gate every synth note gets (-1 none) */
+static const uint8_t ROLL_T[SEQ_NROLL] = {48, 24, 16, 12, 8, 6, 3};   /* a roll's interval, in ticks (96 a beat) */
+static volatile uint8_t roll_live[SEQ_NPART];    /* each drum's live roll rate (0 none) */
+static uint32_t roll_n[SEQ_NPART];               /* ticks into each live roll */
+static float roll_acc;                           /* stopped: samples into the free-running roll tick */
 static volatile float spt = 44100.0f * 60.0f / (120.0f * 96.0f);   /* samples a tick */
 static volatile uint32_t swing_t;                /* ticks the second step of a pair starts late (0 .. 8: triplets) */
 static float acc;                                /* samples into the tick */
@@ -46,8 +50,11 @@ void seq_clear(seq_pattern_t *p, int what)
             p->vol[i] = SEQ_NO_VOL;
         }
     }
-    if (what == SEQ_CLEAR_ALL || what == SEQ_CLEAR_DRUMS)
+    if (what == SEQ_CLEAR_ALL || what == SEQ_CLEAR_DRUMS) {
         p->on[SEQ_BD] = p->on[SEQ_SN] = p->on[SEQ_HH] = 0;
+        for (i = 0; i < 3 * SEQ_STEPS; i++)
+            p->roll[i / SEQ_STEPS][i % SEQ_STEPS] = 0;
+    }
     if (what == SEQ_CLEAR_ALL || what == SEQ_RESET_ACTIVE)
         for (i = 0; i < SEQ_NPART; i++)
             p->active[i] = 0xFFu;
@@ -66,6 +73,16 @@ void seq_tempo(float bpm)
 void seq_swing(float s) { swing_t = (uint32_t)(s < 0.0f ? 0.0f : s > 1.0f ? 8.0f : s * 8.0f + 0.5f); }
 void seq_ext(int on) { ext = (uint8_t)(on != 0); }
 void seq_clock_out(int on) { clk_out = (uint8_t)(on != 0); }
+void seq_roll_live(int part, int rate)
+{
+    if (part < SEQ_BD || part >= SEQ_NPART)
+        return;
+    if (rate > SEQ_NROLL)
+        rate = SEQ_NROLL;
+    if (rate > 0 && !roll_live[part])
+        roll_n[part] = 0;                        /* (a new roll hits at once) */
+    roll_live[part] = (uint8_t)(rate < 0 ? 0 : rate);
+}
 void seq_gate_live(int gate) { gate_live = (int16_t)(gate < 0 ? -1 : gate > SEQ_GATE_TIE ? SEQ_GATE_TIE : gate); }
 void seq_play(int on) { req = on ? 1u : 2u; }
 int seq_playing(void) { return playing || req == 1u; }
@@ -162,6 +179,22 @@ static void requests(void)
     }
 }
 
+static void rolls(void)                          /* each tick (and stopped, the free tick): the rolls' hits */
+{
+    int i;
+    for (i = SEQ_BD; i < SEQ_NPART; i++) {
+        uint32_t r = roll_live[i], t;
+        if (r) {                                 /* live: from its start */
+            if (roll_n[i]++ % ROLL_T[r - 1] == 0)
+                seq_cb_drum(i);
+        } else if (playing && pos[i] >= 0 && (r = pat->roll[i - SEQ_BD][pos[i]]) != 0 && r <= SEQ_NROLL) {
+            t = now - step_t0;                   /* recorded: through its step, from the step's start */
+            if (t % ROLL_T[r - 1] == 0 && !(t == 0 && (pat->on[i] >> (2 * pos[i]) & 1u)))
+                seq_cb_drum(i);
+        }
+    }
+}
+
 static void tick(void)                           /* one tick: the steps and slots on it, then on to the next */
 {
     uint32_t a = SEQ_TPS + swing_t, b = SEQ_TPS - swing_t, t = pair_t;
@@ -183,6 +216,7 @@ static void tick(void)                           /* one tick: the steps and slot
             slot(i, 2 * pos[i] + 1, step_len);
         }
     }
+    rolls();
     if (clk_out && !ext && (now & 3u) == 0u)
         seq_cb_clock(0xF8);
     now++;
@@ -219,6 +253,10 @@ uint32_t seq_frames(uint32_t max)
     requests();
     if (off_left >= 0.0f && off_left + 0.5f < (float)max)   /* the note off, to the sample */
         max = off_left < 1.0f ? 1u : (uint32_t)(off_left + 0.5f);
+    if (!playing && (roll_live[SEQ_BD] | roll_live[SEQ_SN] | roll_live[SEQ_HH])) {   /* stopped, a roll's tick */
+        left = spt - roll_acc;
+        return left <= 1.0f ? 1u : left < (float)max ? (uint32_t)left : max;
+    }
     if (!playing || ext || !pat)
         return max;
     left = spt - acc;
@@ -235,7 +273,19 @@ void seq_advance(uint32_t frames)
         if (off_left <= 0.5f)
             synth_off();
     }
-    if (!playing || ext || !pat)
+    if (!playing) {                              /* stopped: a live roll keeps the tempo's time */
+        if (roll_live[SEQ_BD] | roll_live[SEQ_SN] | roll_live[SEQ_HH]) {
+            roll_acc += (float)frames;
+            while (roll_acc >= spt - 0.5f) {
+                roll_acc -= spt;
+                rolls();
+            }
+        } else {
+            roll_acc = spt;                      /* (the next roll's first hit at once) */
+        }
+        return;
+    }
+    if (ext || !pat)
         return;
     acc += (float)frames;
     while (acc >= spt - 0.5f && playing) {       /* (the half: a tick lands on the nearest sample) */

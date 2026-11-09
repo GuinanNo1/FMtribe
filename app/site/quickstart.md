@@ -47,11 +47,12 @@ and PRESET picks the part (SYNTH, BD, SN, HH). On LFO, ALGO sets the LFO's wave.
 | On DRUMS (ARP), the F♯3 G♯3 A♯3 black keys | Bass drum, snare, hi-hat. Every other key still plays the synth. |
 | PLAY | Start or stop the pattern. |
 | REC, then PLAY | Record: the keys land on the nearest step; the DRUMS pads record the drums. |
+| FX (or F♯5), then a DRUMS pad | ROLL: the pad rolls its drum while held. ALGO sets the rate. |
 | Turn MASTER | Volume. |
 | SAVE | Keeps your settings for the next start (it lights when there's something to save). |
 
-**A drum pattern in a minute:** press SEQ. On STEP the keys are the monotribe's step row: the first eight white keys
-are steps 1–8, and their lights are the step LEDs. Press F♯3 to pick the bass drum and press white keys to switch
+**A drum pattern in a minute:** press SEQ. On STEP the keys are the monotribe's step row: every other white key (F3, A3,
+C4, E4, G4, B4, D5, F5) is a step, and their lights are the step LEDs. Press F♯3 to pick the bass drum and press white keys to switch
 its steps on. G♯3 picks the snare, A♯3 the hi-hat and C♯4 the synth. Press PLAY.
 
 **Gate times:** while it plays, hold F♯4 (GATE TIME) and touch the white keys: left is short, right is long. The

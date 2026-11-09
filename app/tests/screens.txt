@@ -23,20 +23,20 @@ key 1 down
 wait 30
 key 1 up
 tapkey 0
-tapkey 4
 tapkey 7
-tapkey 11
+tapkey 14
+tapkey 21
 key 5 down
 wait 30
 key 5 up
 tapkey 0
-tapkey 2
 tapkey 4
-tapkey 6
 tapkey 7
-tapkey 9
 tapkey 11
-tapkey 12
+tapkey 14
+tapkey 18
+tapkey 21
+tapkey 24
 key 8 down
 wait 30
 key 8 up

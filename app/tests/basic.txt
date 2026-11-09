@@ -43,9 +43,9 @@ midi 80 3C 00
 listen
 wait 100
 said FMTRIBE. OCTAVE +1. HOME 1/2. LEVEL 100. RHYTHM 90. CUTOFF 80. PEAK 30
-tap FX
+tap EDIT
 wait 30
-said BUTTON FX
+said BUTTON EDIT
 # MASTER turned while a note plays: the gain glides, so no sample jumps further than the wave itself does
 midi 90 45 64
 wait 100
