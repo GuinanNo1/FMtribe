@@ -92,10 +92,10 @@ static const page_t PAGE[NPG] = {
     /* the sequencer: the white keys are the part's 16 slots, the black ones pick the part; then the active steps
      * (white keys 1..8) and the clears (black keys); then a step's note, gate and on (the keys write its note) */
     {"SEQ", "SEQ", B_SEQ, {P_TEMPO, P_PART, P_GATE, P_SWING}},
-    {"SEQ STEPS", "SEQ", B_SEQ, {P_STEPS16, P_SYNC, P_CLKOUT, P_PART}},
+    {"SEQ STEPS", "SEQ", B_SEQ, {P_STEPS16, -1, -1, P_PART}},
     {"SEQ EDIT", "SEQ", B_SEQ, {P_EDSTEP, P_EDNOTE, P_EDGATE, P_EDON}},
     {"GLOBAL", "GLO", B_GLO, {P_SYNTH_CH, P_DRUM_CH, P_BLE, -1}},
-    {"GLOBAL", "GLO", B_GLO, {P_KEYLIGHT, P_GLOW, -1, -1}},
+    {"GLOBAL", "GLO", B_GLO, {P_KEYLIGHT, P_GLOW, P_SYNC, P_CLKOUT}},
     {"DEVICES", "GLO", B_GLO, {P_BLEDEV, -1, -1, -1}},   /* SAVE connects the pick, or lets it go (lib/btdev) */
 };
 

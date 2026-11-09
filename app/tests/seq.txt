@@ -228,8 +228,11 @@ tapkey 0
 tapkey 4
 tapkey 7
 tapkey 11
-tap SEQ
-turn K2 1
+tap GLO
+tap GLO
+wait 30
+expect page 9
+turn K3 1
 expect sync 1
 midi FA
 wait 20

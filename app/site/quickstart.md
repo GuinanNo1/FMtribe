@@ -32,10 +32,10 @@ the screen shows which one, such as 1/2.
 | LFO 2/2 (LFO) | WAVE | | | |
 | DRUMS (ARP) | RHYTHM | BD DECAY | SN DECAY | HH DECAY |
 | SEQ 1/3 (SEQ) | TEMPO | PART | GATE | SWING |
-| SEQ STEPS 2/3 (SEQ) | STEPS | SYNC | CLOCK OUT | PART |
+| SEQ STEPS 2/3 (SEQ) | STEPS | | | PART |
 | SEQ EDIT 3/3 (SEQ) | STEP | NOTE | GATE | ON |
 | GLOBAL 1/3 (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
-| GLOBAL 2/3 (GLO) | KEY LIGHT | GLOW | | |
+| GLOBAL 2/3 (GLO) | KEY LIGHT | GLOW | SYNC | CLOCK OUT |
 | DEVICES 3/3 (GLO) | DEVICE | | | |
 
 | Do this | And |

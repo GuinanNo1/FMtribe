@@ -46,14 +46,14 @@ UI: pages on buttons (app.c PAGE[]): a button shows its first page, pressed agai
 the header's top right shows x/y (page of that button's pages). SEL VCO VCF (CUTOFF PEAK WAVE NOISE), ENV EG VCA
 (EG LEVEL), LFO 1/2 (RATE INT TARGET MODE) and 2/2 (WAVE), ARP DRUMS (RHYTHM, BD/SN/HH DECAY; black keys F#-G#-A#
 groups are BD SN HH pads, glowing with KEY LIGHT GUIDE), GLO GLOBAL 1/2 (SYNTH CH, DRUM CH, BLE MIDI) and 2/2 (KEY
-LIGHT OFF/HELD/GUIDE, GLOW). Settings are PAR[] (knob 0..127 or switch), saved as "FMT6" with the pattern. Lights via lights()
+LIGHT OFF/HELD/GUIDE, GLOW, SYNC INT/MIDI, CLOCK OUT). Settings are PAR[] (knob 0..127 or switch), saved as "FMT6" with the pattern. Lights via lights()
 (plat_lights: lit held keys, dim guide keys, mid for the playhead). PAR[] has lo/hi; pget/pset reach pattern-backed
 settings (STEPS, SEQ EDIT's STEP/NOTE/GATE/ON) and the BLE device pick, which are not in set.v (NSAVED).
 Sequencer (0.3): app/seq/seq.c (o2), tests/host/seq_test.c, app/tests/seq.txt. 8 steps x 2 slots, parts
 SYNTH/BD/SN/HH, per-part active steps, gate per synth slot (127 tie), 16-step synth, swing, 96 ppqn ticks in the
 audio interrupt (app_render splits the block at ticks and sample-timed note offs), MIDI clock in (SYNC MIDI, 4 ticks
 a clock) and out. SEQ 1/3 TEMPO PART GATE SWING (white keys = part's 16 slots, black F#3 G#3 A#3 C#4 = BD SN HH
-SYNTH), SEQ STEPS 2/3 STEPS SYNC CLOCK OUT PART (white 1-8 active steps, black F#3 G#3 A#3 C#4 clear all / synth /
+SYNTH), SEQ STEPS 2/3 STEPS - - PART (white 1-8 active steps, black F#3 G#3 A#3 C#4 clear all / synth /
 drums / reset active), SEQ EDIT 3/3 STEP NOTE GATE ON (keys write notes, cursor advances). PLAY start/stop (green,
 red recording); REC arms; armed, keys play+record synth on any page, DRUMS pads record drums. Pattern in settings.
 BLE devices: GLOBAL DEVICES 3/3 (K1 picks, SAVE connects/lets go; scans while the page is up); BLE on/off GLOBAL 1/3.

@@ -67,10 +67,10 @@ page, if it has more than one. A switch moves one position for each click of the
 | LFO 2/2 (LFO) | WAVE | | | |
 | DRUMS (ARP) | RHYTHM | BD DECAY | SN DECAY | HH DECAY |
 | SEQ 1/3 (SEQ) | TEMPO | PART | GATE | SWING |
-| SEQ STEPS 2/3 (SEQ) | STEPS | SYNC | CLOCK OUT | PART |
+| SEQ STEPS 2/3 (SEQ) | STEPS | | | PART |
 | SEQ EDIT 3/3 (SEQ) | STEP | NOTE | GATE | ON |
 | GLOBAL 1/3 (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
-| GLOBAL 2/3 (GLO) | KEY LIGHT | GLOW | | |
+| GLOBAL 2/3 (GLO) | KEY LIGHT | GLOW | SYNC | CLOCK OUT |
 | DEVICES 3/3 (GLO) | DEVICE | | | |
 
 ### The sequencer
@@ -175,7 +175,7 @@ page; at first the synth is on 1 and the drums on 10.
 | CC 82 | LFO MODE: 32 FAST, 64 SLOW, 96 1 SHOT. |
 | CC 83 | LFO WAVE: 32 saw, 64 triangle, 96 square, 127 S&H. |
 | CC 7 | LEVEL. |
-| Clock, start, stop | With SYNC on MIDI (SEQ STEPS), the sequencer follows them. |
+| Clock, start, stop | With SYNC on MIDI (GLOBAL 2/3), the sequencer follows them. |
 
 The CCs are read on the synth's channel. The sequencer sends its notes out too, on the same channels, and MIDI
 clock, start and stop with CLOCK OUT on. The keys send notes, with their velocity and poly aftertouch, out over USB
