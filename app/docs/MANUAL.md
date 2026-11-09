@@ -69,8 +69,8 @@ page, if it has more than one. A switch moves one position for each click of the
 | SEQ 1/3 (SEQ) | TEMPO | PART | GATE | SWING |
 | SEQ STEPS 2/3 (SEQ) | STEPS | | | PART |
 | SEQ EDIT 3/3 (SEQ) | STEP | NOTE | GATE | ON |
-| GLOBAL 1/3 (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
-| GLOBAL 2/3 (GLO) | KEY LIGHT | GLOW | SYNC | CLOCK OUT |
+| GLOBAL 1/3 (GLO) | SYNTH CH | DRUM CH | SYNC | CLOCK OUT |
+| GLOBAL 2/3 (GLO) | KEY LIGHT | GLOW | BLE MIDI | |
 | DEVICES 3/3 (GLO) | DEVICE | | | |
 
 ### The sequencer
@@ -175,7 +175,7 @@ page; at first the synth is on 1 and the drums on 10.
 | CC 82 | LFO MODE: 32 FAST, 64 SLOW, 96 1 SHOT. |
 | CC 83 | LFO WAVE: 32 saw, 64 triangle, 96 square, 127 S&H. |
 | CC 7 | LEVEL. |
-| Clock, start, stop | With SYNC on MIDI (GLOBAL 2/3), the sequencer follows them. |
+| Clock, start, stop | With SYNC on MIDI (GLOBAL 1/3), the sequencer follows them. |
 
 The CCs are read on the synth's channel. The sequencer sends its notes out too, on the same channels, and MIDI
 clock, start and stop with CLOCK OUT on. The keys send notes, with their velocity and poly aftertouch, out over USB
@@ -185,7 +185,7 @@ Over Bluetooth, FMtribe shows up as "FM-1". On a Mac, open Audio MIDI Setup, cho
 click the Bluetooth button, then click Connect next to FM-1. On an iPad or iPhone, connect from a music app's
 Bluetooth MIDI settings.
 
-To switch Bluetooth off, set BLE MIDI to OFF on the GLOBAL page (GLO). The FM-1 stops advertising and drops any
+To switch Bluetooth off, set BLE MIDI to OFF on GLOBAL 2/3 (GLO). The FM-1 stops advertising and drops any
 connection. To keep your choice for the next time the FM-1 starts, press SAVE.
 
 To connect FMtribe to a Bluetooth MIDI device, such as a keyboard or a controller, first put the device in its

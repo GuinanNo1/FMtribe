@@ -75,7 +75,9 @@ wait 50
 listen
 wait 1200
 tap GLO
+tap GLO
 wait 30
+expect page 9
 turn K3 1
 wait 50
 said BLE MIDI OFF
@@ -86,6 +88,7 @@ reboot
 wait 1200
 expect ble 0
 tap GLO
+tap GLO
 wait 30
 turn K3 -1
 wait 1200
@@ -93,7 +96,6 @@ said BLE MIDI ON
 expect ble 2
 # GLOBAL 3/3, DEVICES: it looks for Bluetooth MIDI devices while it's up; K1 picks one, SAVE connects to it and
 # lets it go (lib/btdev)
-tap GLO
 tap GLO
 wait 700
 expect page 10

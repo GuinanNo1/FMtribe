@@ -234,14 +234,15 @@ wait 30
 key 2 up
 wait 30
 expect_out USB 91 37 64
-# Bluetooth MIDI off from the page, on again
+# SYNC to MIDI and back; CLOCK OUT off and on
 turn K3 1
-expect ble_off 1
-expect ble 0
+expect sync 1
 turn K3 -1
-expect ble_off 0
-wait 1200
-expect ble 2
+expect sync 0
+turn K4 -1
+expect clkout 0
+turn K4 1
+expect clkout 1
 turn K1 -1
 turn K2 -1
 # GLOBAL 2/2: KEY LIGHT off, then held keys only; GLOW

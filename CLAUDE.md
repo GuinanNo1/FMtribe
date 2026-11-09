@@ -45,8 +45,8 @@ release ~12 ms, SN tone/noise balance) wait for the prototype comparison. Known 
 UI: pages on buttons (app.c PAGE[]): a button shows its first page, pressed again its next; K1–K4 edit the page;
 the header's top right shows x/y (page of that button's pages). SEL VCO VCF (CUTOFF PEAK WAVE NOISE), ENV EG VCA
 (EG LEVEL), LFO 1/2 (RATE INT TARGET MODE) and 2/2 (WAVE), ARP DRUMS (RHYTHM, BD/SN/HH DECAY; black keys F#-G#-A#
-groups are BD SN HH pads, glowing with KEY LIGHT GUIDE), GLO GLOBAL 1/2 (SYNTH CH, DRUM CH, BLE MIDI) and 2/2 (KEY
-LIGHT OFF/HELD/GUIDE, GLOW, SYNC INT/MIDI, CLOCK OUT). Settings are PAR[] (knob 0..127 or switch), saved as "FMT6" with the pattern. Lights via lights()
+groups are BD SN HH pads, glowing with KEY LIGHT GUIDE), GLO GLOBAL 1/3 MIDI (SYNTH CH, DRUM CH, SYNC INT/MIDI,
+CLOCK OUT), 2/3 (KEY LIGHT OFF/HELD/GUIDE, GLOW, BLE MIDI on/off). Settings are PAR[] (knob 0..127 or switch), saved as "FMT6" with the pattern. Lights via lights()
 (plat_lights: lit held keys, dim guide keys, mid for the playhead). PAR[] has lo/hi; pget/pset reach pattern-backed
 settings (STEPS, SEQ EDIT's STEP/NOTE/GATE/ON) and the BLE device pick, which are not in set.v (NSAVED).
 Sequencer (0.3): app/seq/seq.c (o2), tests/host/seq_test.c, app/tests/seq.txt. 8 steps x 2 slots, parts
@@ -56,7 +56,7 @@ a clock) and out. SEQ 1/3 TEMPO PART GATE SWING (white keys = part's 16 slots, b
 SYNTH), SEQ STEPS 2/3 STEPS - - PART (white 1-8 active steps, black F#3 G#3 A#3 C#4 clear all / synth /
 drums / reset active), SEQ EDIT 3/3 STEP NOTE GATE ON (keys write notes, cursor advances). PLAY start/stop (green,
 red recording); REC arms; armed, keys play+record synth on any page, DRUMS pads record drums. Pattern in settings.
-BLE devices: GLOBAL DEVICES 3/3 (K1 picks, SAVE connects/lets go; scans while the page is up); BLE on/off GLOBAL 1/3.
+BLE devices: GLOBAL DEVICES 3/3 (K1 picks, SAVE connects/lets go; scans while the page is up).
 SELECT/ALGO/PRESET free. Not yet: Flux, drum rolls, volume automation, ribbon modes, gate-time hold.
 LFO (0.3): tribe.c, rates from the manual; depth (±1 oct pitch, ±3 oct cutoff), INT square-law taper, 1SHOT on the
 SLOW range and the falling saw are GUESSES.

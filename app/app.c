@@ -94,8 +94,8 @@ static const page_t PAGE[NPG] = {
     {"SEQ", "SEQ", B_SEQ, {P_TEMPO, P_PART, P_GATE, P_SWING}},
     {"SEQ STEPS", "SEQ", B_SEQ, {P_STEPS16, -1, -1, P_PART}},
     {"SEQ EDIT", "SEQ", B_SEQ, {P_EDSTEP, P_EDNOTE, P_EDGATE, P_EDON}},
-    {"GLOBAL", "GLO", B_GLO, {P_SYNTH_CH, P_DRUM_CH, P_BLE, -1}},
-    {"GLOBAL", "GLO", B_GLO, {P_KEYLIGHT, P_GLOW, P_SYNC, P_CLKOUT}},
+    {"GLOBAL", "GLO", B_GLO, {P_SYNTH_CH, P_DRUM_CH, P_SYNC, P_CLKOUT}},   /* MIDI */
+    {"GLOBAL", "GLO", B_GLO, {P_KEYLIGHT, P_GLOW, P_BLE, -1}},
     {"DEVICES", "GLO", B_GLO, {P_BLEDEV, -1, -1, -1}},   /* SAVE connects the pick, or lets it go (lib/btdev) */
 };
 

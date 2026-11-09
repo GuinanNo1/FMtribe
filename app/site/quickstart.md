@@ -34,8 +34,8 @@ the screen shows which one, such as 1/2.
 | SEQ 1/3 (SEQ) | TEMPO | PART | GATE | SWING |
 | SEQ STEPS 2/3 (SEQ) | STEPS | | | PART |
 | SEQ EDIT 3/3 (SEQ) | STEP | NOTE | GATE | ON |
-| GLOBAL 1/3 (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
-| GLOBAL 2/3 (GLO) | KEY LIGHT | GLOW | SYNC | CLOCK OUT |
+| GLOBAL 1/3 (GLO) | SYNTH CH | DRUM CH | SYNC | CLOCK OUT |
+| GLOBAL 2/3 (GLO) | KEY LIGHT | GLOW | BLE MIDI | |
 | DEVICES 3/3 (GLO) | DEVICE | | | |
 
 | Do this | And |
@@ -57,7 +57,7 @@ the synth. Press PLAY.
 - **USB-C:** the FM-1 is a MIDI device and a sound card. Record it from the input "FMtribe FM-1".
 - **Bluetooth MIDI:** on a Mac, open Audio MIDI Setup › Window › Show MIDI Studio, click the Bluetooth button, then
   Connect next to FM-1. On an iPad or iPhone, connect from a music app's Bluetooth MIDI settings. Switch Bluetooth
-  off or on with BLE MIDI on the GLOBAL page.
+  off or on with BLE MIDI on GLOBAL 2/3 (GLO).
 - **A Bluetooth keyboard:** put it in pairing mode, press GLO until DEVICES 3/3 shows, turn K1 to pick it, press SAVE.
 - **Screen mirror:** open [the Mirror page](../mirror/) in Chrome or Edge with the FM-1 on USB, and press Connect.
   Press Control to play it from the page.
