@@ -1,0 +1,139 @@
+# FMtribe's voice and drums from the panel and MIDI, in the host simulator: ./build.sh --host, then
+#   app/build/host/fmtribe_host app/tests/sound.txt app/build/tests/sound   (or: sh tests/run_tests.sh)
+# The engine's numbers against the estimates are tests/host/tribe_test.c; this is the panel and the MIDI map.
+wait 600
+# the defaults: saw, Decay EG, CUTOFF 80, PEAK 30, NOISE 0, LEVEL 100, RHYTHM 90
+expect wave 0
+expect eg 0
+expect knob0 80
+expect knob4 90
+shot panel.png
+# a held key: Decay EG, sounding at once, gone by ~1.3 s even while held
+wav decay.wav
+key 7 down
+wait 300
+expect note 60
+expect peak_db_min -26
+wait 1300
+peakreset
+wait 200
+expect peak_db_max -60
+key 7 up
+wait 100
+wavstop
+# PRESET and ALGO: the switches turn round; K1..K4 and SELECT the knobs
+turn PRESET 1
+expect wave 1
+turn PRESET 1
+expect wave 2
+turn PRESET 1
+expect wave 0
+turn ALGO 1
+expect eg 1
+turn K1 -20
+expect knob0 60
+turn K2 5
+expect knob1 35
+turn SELECT -10
+expect knob4 80
+shot turned.png
+# Gate EG: a held note stays up; let go, it closes fast
+wav gate.wav
+key 0 down
+wait 1500
+peakreset
+wait 100
+expect peak_db_min -24
+key 0 up
+wait 150
+peakreset
+wait 100
+expect peak_db_max -60
+wavstop
+# a CUTOFF sweep with the PEAK high, Attack EG
+turn ALGO 1
+expect eg 2
+turn K2 70
+expect knob1 105
+wav sweep.wav
+key 12 down
+turn K1 -60 20
+turn K1 100 20
+key 12 up
+wait 200
+wavstop
+# the drums: EDIT, GLO, HOME, and MIDI channel 10 (36, 40, 42); a pad lights as it hits
+out
+wav drums.wav
+tap EDIT
+wait 250
+tap GLO
+wait 250
+expect_out USB 99 24 64
+expect_out USB 99 28 64
+tap HOME
+shot drums.png
+wait 250
+expect drum0 1
+expect drum1 1
+expect drum2 1
+midi 99 24 64
+wait 200
+midi 99 28 64
+wait 200
+midi 99 2A 64
+wait 200
+midi 99 2B 64
+wait 200
+expect drum0 2
+expect drum1 2
+expect drum2 2
+wavstop
+# channel 1: notes, bend; CC 80 the EG shape (32 decay, 64 gate, 96 attack), CC 7 LEVEL
+midi B0 50 20
+wait 30
+expect eg 0
+midi B0 50 40
+wait 30
+expect eg 1
+midi B0 07 40
+wait 30
+expect knob3 64
+expect dirty 1
+midi 90 30 64
+wait 100
+expect note 48
+midi E0 7F 7F
+wait 100
+midi 80 30 00
+wait 50
+expect note -1
+# a note on another channel plays nothing
+midi 91 30 64
+wait 50
+expect note -1
+# the settings across a reboot
+tap SAVE
+wait 30
+reboot
+wait 600
+expect wave 0
+expect eg 1
+expect knob0 100
+expect knob3 64
+# everything up at once stays under full scale
+turn K2 30
+turn K3 127
+turn K4 127
+turn SELECT 127
+peakreset
+wav loud.wav
+key 3 down
+tap EDIT
+tap GLO
+tap HOME
+wait 800
+key 3 up
+wait 200
+wavstop
+expect peak_db_max 0.1

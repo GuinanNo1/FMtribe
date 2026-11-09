@@ -2,5 +2,7 @@
 # FMtribe's words for a screen reader (fm1-reader): the text on the screen <TAB> what to say.
 # url: https://guinanno1.github.io/FMtribe/words/
 FMTRIBE	F M tribe
-K1 OCTAVE	knob 1, octave
-K2 WAVE	knob 2, wave
+BD	bass drum
+SN	snare
+HH	hi hat
+EG	envelope

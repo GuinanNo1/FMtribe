@@ -1,9 +1,10 @@
 # FMtribe
 
 FMtribe will recreate the sound and controls of a classic monophonic analogue groove box on the M-VAVE FM-1. This
-early build still plays fm1-base's starting voice: the keys play a simple voice with velocity and pressure, a few
-controls set the octave, the wave and the volume and save your settings, and MIDI goes out over USB and Bluetooth.
-This manual describes that build and will be rewritten as the instrument arrives.
+build has the synth voice and the drums: one oscillator (saw, triangle or square) and noise into a two-pole
+MS-style low-pass filter that self-oscillates, a VCA with three fixed envelopes, and a bass drum, snare and hi-hat.
+The LFO, the sequencer and the ribbon modes come next. The sound is fitted to recordings of real units, so treat
+it as an estimate until it has been compared side by side with one.
 
 ![The FMtribe screen at rest](img/screen-ready.png "FMtribe at rest")
 
@@ -39,15 +40,16 @@ can recover an FM-1 that doesn't start, too. For details, see felucca-bsp's `too
 
 ## 2. The screen
 
-![FMtribe while a key is held: C4 in the header with V 90 P 64, FX lit among the buttons, K3 at 3, the key filled on the keyboard](img/screen-playing.png "A key held, FX pressed, K3 turned")
+![FMtribe while it plays: the five knobs as bars, SAW and ATTACK lit, the HH pad lit](img/screen-playing.png "Playing: the Attack envelope, the hi-hat just hit")
 
 | Part | What it shows |
 | --- | --- |
-| Header | The name, and BLE, which lights while a computer or tablet is connected over Bluetooth. While you play a key, it shows the note, the velocity it landed at (V) and how hard you're pressing it (P). After a change, a message shows here for a moment. |
-| Buttons | All 14, by their names. A button lights while you hold it. |
-| Knobs | The seven encoders, each with a count of its turns. A knob lights for a moment as you turn it. |
-| Keys | The 27 keys, black above white. A held key fills up to its velocity, and white over that shows its pressure. |
-| Bottom line | The octave, the wave (on PRESET) and the volume (MASTER). |
+| Header | The name, and BLE, which lights while a computer or tablet is connected over Bluetooth. While you play a key, it shows the note. After a change, a message shows here for a moment, such as CUTOFF 100. |
+| Knobs | CUTOFF, PEAK, NOISE, LEVEL and RHYTHM, each a bar and a value from 0 to 127, with the encoder that turns it underneath. A knob lights for a moment as you turn it. |
+| WAVE and EG | The oscillator's wave and the envelope, with the one in use lit. |
+| Drums | The BD, SN and HH pads, with the button that plays each. A pad lights as its drum plays. |
+| Keys | The 27 keys, black above white. A held key fills up. |
+| Bottom line | The octave, the last MIDI message in, and the volume (MASTER). |
 
 ---
 
@@ -55,29 +57,47 @@ can recover an FM-1 that doesn't start, too. For details, see felucca-bsp's `too
 
 | Control | What it does |
 | --- | --- |
-| Keys | Play the voice, louder the harder they land. Each key also sends its note with its velocity over USB and Bluetooth, on channel 1. Press a held key harder to send aftertouch. The last key you pressed is the one that sounds. |
-| OCT− · OCT+ | Set the octave, from −2 to +2. |
-| PRESET | Picks the wave: sine or triangle. |
+| Keys | Play the synth. The last key you pressed sounds, and each new key starts the envelope again, as the monotribe's ribbon does. Let go of it while holding another, and the pitch goes back to the one still held. The volume doesn't follow how hard you play, as on the monotribe. Each key also sends its note over USB and Bluetooth, on channel 1. |
+| K1 · CUTOFF | The filter's cutoff, from about 80 Hz to about 18 kHz. |
+| K2 · PEAK | The filter's resonance. Near the top, the filter whistles on its own at the cutoff while a note plays. |
+| K3 · NOISE | White noise beside the oscillator, into the filter. |
+| K4 · LEVEL | The synth's volume. |
+| SELECT · RHYTHM | The drums' volume. |
+| PRESET · WAVE | Saw, triangle or square. |
+| ALGORITHM · EG | The envelope. DECAY jumps to full when a note starts and dies away over about 1.3 seconds, even while you hold the key. GATE stays full while you hold it. ATTACK rises over about 1.3 seconds while you hold it. All three close quickly when you let go. |
+| EDIT · GLO · HOME | Play the bass drum, snare and hi-hat, and send them out on channel 10. They stand in for the sequencer until it arrives. |
+| OCT− · OCT+ | Set the octave, in six steps from −3 to +2, as the monotribe's six octave positions. |
 | MASTER | Sets the volume. |
-| SAVE | Saves the octave, the wave and whether Bluetooth is on or off. SAVE lights while there's something to save. |
+| SAVE | Saves the knobs, the wave, the envelope, the octave and whether Bluetooth is on or off. SAVE lights while there's something to save. |
 | REC | Press it to find and connect a Bluetooth MIDI device. Hold it for a second to switch Bluetooth off or on. For details, see MIDI and audio. |
-| Every other button and knob | Shows its name on the screen, and does nothing else yet. The synth, drums and sequencer will use them. |
+| FX, SEL, ENV, LFO, ARP, SEQ, PLAY | Show their names, and do nothing else yet. The LFO and the sequencer will use them. |
 
 ---
 
 ## 4. Saving
 
-Press SAVE to keep the octave, the wave and whether Bluetooth is on. They come back the next time the FM-1 starts. SAVE stays lit while
-there are changes to save.
+Press SAVE to keep the knobs, the wave, the envelope, the octave and whether Bluetooth is on. They come back the
+next time the FM-1 starts. SAVE stays lit while there are changes to save. Settings saved by FMtribe 0.1 don't
+carry over, since this version keeps more of them.
 
-![After OCT+ and PRESET: OCT +1 and PRESET TRIANGLE, SAVE waiting](img/screen-settings.png "OCT+ and PRESET changed, not saved yet")
+![After turning CUTOFF, PEAK and RHYTHM and switching the envelope to GATE](img/screen-settings.png "Knobs turned, not saved yet")
 
 ---
 
 ## 5. MIDI and audio
 
-MIDI comes in over USB, Bluetooth and the TRS jack. A note on any channel plays the voice, and a note off releases
-it. The keys send notes with their velocity, and poly aftertouch, out over USB and Bluetooth.
+MIDI comes in over USB, Bluetooth and the TRS jack, on the monotribe's own map:
+
+| Message | What it does |
+| --- | --- |
+| Notes on channel 1 | Play the synth. Velocity is ignored. |
+| Pitch bend on channel 1 | Bends the synth up to 2 semitones either way. |
+| Notes 36, 40, 42 on channel 10 | Play the bass drum, snare and hi-hat. |
+| CC 80 on channel 1 | The envelope: about 32 for DECAY, 64 for GATE, 96 for ATTACK. |
+| CC 7 on channel 1 | LEVEL. |
+
+The monotribe's LFO controllers (CC 1, 16, 81 to 83) arrive with the LFO. The keys send notes, with their velocity
+and poly aftertouch, out over USB and Bluetooth on channel 1, and the drum buttons send theirs on channel 10.
 
 Over Bluetooth, FMtribe shows up as "FM-1". On a Mac, open Audio MIDI Setup, choose Window > Show MIDI Studio,
 click the Bluetooth button, then click Connect next to FM-1. On an iPad or iPhone, connect from a music app's
@@ -120,7 +140,9 @@ reader or with its built-in voice.
 
 ## 8. Troubleshooting
 
-If you hear no sound, turn MASTER up. The voice plays only while you hold a key.
+If you hear no sound, turn MASTER and LEVEL up, and CUTOFF too: with CUTOFF low and PEAK low, the filter lets
+little through. With the DECAY envelope, a note dies away after about a second even while you hold the key; choose
+GATE with ALGORITHM for a note that lasts. For the drums, turn RHYTHM up.
 
 If the installer doesn't find the FM-1, use Chrome or Edge, and allow MIDI when the browser asks. Close any other
 programs that use the FM-1's MIDI port.

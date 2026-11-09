@@ -42,7 +42,7 @@ expect peak_db_min -30
 midi 80 3C 00
 listen
 wait 100
-said FMTRIBE. OCTAVE +1. WAVE TRIANGLE
+said FMTRIBE. OCTAVE +1. WAVE TRIANGLE. EG DECAY
 tap ARP
 wait 30
 said BUTTON ARP

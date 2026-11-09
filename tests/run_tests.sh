@@ -1,8 +1,10 @@
 #!/bin/sh
 # SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Charles Vestal, Ian Guinan
-# FMtribe's tests: the whole app in fm1-base's host simulator (app/tests/basic.txt: keys, MIDI, settings across a
-# reboot, a render to WAV, the screen reader), the update path against FMtribe's package when ./build.sh has made
+# FMtribe's tests: the engine against the recordings' estimates (tests/host/tribe_test.c: filter, VCO, EGs, drums; its
+# renders in app/build/tests/tribe/), the whole app in fm1-base's host simulator (app/tests/basic.txt: keys, MIDI,
+# settings across a reboot, a render to WAV, the screen reader; app/tests/sound.txt: the panel, the drums, the MIDI
+# map), the update path against FMtribe's package when ./build.sh has made
 # one, and the browser build when Emscripten is installed. Screenshots and audio in app/build/tests/.
 # fm1-base's own tests: sh base/tests/run_tests.sh
 #   sh tests/run_tests.sh
@@ -33,9 +35,13 @@ if [ -f $B/fmtribe.fwsc ]; then
 else
     echo "  skip update path (no $B/fmtribe.fwsc: ./build.sh)"
 fi
+mkdir -p "$OUT/tribe"
+run tribe sh -c "$CC -O2 -ffp-contract=off -Ibase/include -Iapp/dsp -o $OUT/tribe_test tests/host/tribe_test.c -lm && \
+    $OUT/tribe_test $OUT/tribe"
 run host-build sh build.sh --host
-mkdir -p "$OUT/basic"
+mkdir -p "$OUT/basic" "$OUT/sound"
 run basic $B/host/fmtribe_host app/tests/basic.txt "$OUT/basic"
+run sound $B/host/fmtribe_host app/tests/sound.txt "$OUT/sound"
 if command -v emcc >/dev/null 2>&1; then
     run emu sh build.sh --web
 else

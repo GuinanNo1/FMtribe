@@ -36,3 +36,11 @@ Channel 1 synth; channel 10 drums on notes 36 (BD), 40 (SN), 42 (HH); CCs 1, 16,
 ## Implementation order
 VCO → Korg35 ZDF filter → EGs → LFO → drums → sequencer. Add a host unit test and a render-to-WAV scenario for
 each, as GIO-1's `tests/host/` does.
+
+Done (0.2): `app/dsp/tribe.c` — PolyBLEP/BLAMP VCO and the Korg35 (Pirkle AN-5) run 2x oversampled with a 35-tap
+halfband; Decay/Gate/Attack EGs; BD/SN/HH. `tests/host/tribe_test.c` checks each against the estimates above (and
+writes WAVs); `app/tests/sound.txt` covers the panel and MIDI map. Constants marked GUESS in tribe.c (Gate/Attack,
+release ~12 ms, SN tone/noise balance) wait for the prototype comparison. Known gap: self-oscillation level rises
+~2.5 dB from 80 Hz to 18 kHz; the recordings suggest it falls ~6 dB from 200 Hz to 3.5 kHz.
+Panel for now: K1–K4 CUTOFF/PEAK/NOISE/LEVEL, SELECT RHYTHM, PRESET wave, ALGO EG, EDIT/GLO/HOME the drums.
+Next: LFO (CC 1, 16, 81–83), then the sequencer, which takes over the drum buttons.
