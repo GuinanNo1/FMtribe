@@ -11,6 +11,10 @@ FMtribe is a clean-room recreation. It contains no Korg code or firmware and no 
 sound is modelled from published circuit papers and fitted to public recordings of real units. See
 [LICENSING.md](LICENSING.md).
 
+** If you own a Korg Monotribe and you would like to help make this sound more authentic let me know. I'll send 
+you some intructions as to how you might take some audio recordings to measure the filters and envelopes. 
+Thanks! ** 
+
 ## Plan
 
 1. Synth voice: VCO (saw, triangle, square), Korg35-style zero-delay-feedback filter, the three EG modes, LFO.
