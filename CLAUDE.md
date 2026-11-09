@@ -42,7 +42,7 @@ halfband; Decay/Gate/Attack EGs; BD/SN/HH. `tests/host/tribe_test.c` checks each
 writes WAVs); `app/tests/sound.txt` covers the panel and MIDI map. Constants marked GUESS in tribe.c (Gate/Attack,
 release ~12 ms, SN tone/noise balance) wait for the prototype comparison. Known gap: self-oscillation level rises
 ~2.5 dB from 80 Hz to 18 kHz; the recordings suggest it falls ~6 dB from 200 Hz to 3.5 kHz.
-UI (0.4): pages on buttons (app.c PAGE[]), HOME first (the start page, 1/2: LEVEL, RHYTHM, CUTOFF, PEAK; DECAY MOTION 2/2: BD/SN/HH DECAY, MOTION; RANGE only on VCO), then the monotribe's panel left to
+UI (0.4): pages on buttons (app.c PAGE[]), HOME first (the start page, 1/2: LEVEL, RHYTHM, CUTOFF, PEAK; RANGE MOTION 2/2: RANGE, MOTION), then the monotribe's panel left to
 right: a button shows its first page,
 pressed again its next; K1–K4 edit the page; the header shows the page name (left, in place of the app name) and x/y (right). ENV VCO 1/2 (NOISE
 RANGE; RANGE WIDE/NARROW = slow/fast glide (tribe glide, legato only; times GUESS), KEY none) and VCF VCA 2/2 (CUTOFF PEAK LEVEL EG); LFO (RATE INT TARGET

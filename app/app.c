@@ -94,7 +94,7 @@ enum { PG_HOME, PG_HOME2, PG_VCO, PG_VCF, PG_LFO, PG_DRUMS, PG_SEQ, PG_EDIT, PG_
 static const page_t PAGE[NPG] = {
     /* HOME, the start page: the synth's and the drums' levels, and the filter */
     {"HOME", "HOME", B_HOME, {P_LEVEL, P_RHYTHM, P_CUTOFF, P_PEAK}},
-    {"DECAY MOTION", "HOME", B_HOME, {P_BD_DEC, P_SN_DEC, P_HH_DEC, P_MOTION}},   /* (RANGE: on VCO) */
+    {"RANGE MOTION", "HOME", B_HOME, {P_RANGE, P_MOTION, -1, -1}},
     {"VCO", "VCO", B_ENV, {P_NOISE, P_RANGE, -1, -1}},
     {"VCF VCA", "VCO", B_ENV, {P_CUTOFF, P_PEAK, P_LEVEL, P_EG}},
     {"LFO", "LFO", B_LFO, {P_LRATE, P_LINT, P_LTARGET, P_LMODE}},

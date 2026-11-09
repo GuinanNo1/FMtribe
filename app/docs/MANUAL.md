@@ -65,7 +65,7 @@ the page on the screen. A switch moves one position for each click of the knob.
 | Page (button) | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
 | HOME 1/2 (HOME) | LEVEL | RHYTHM | CUTOFF | PEAK |
-| DECAY MOTION 2/2 (HOME) | BD DECAY | SN DECAY | HH DECAY | MOTION |
+| RANGE MOTION 2/2 (HOME) | RANGE | MOTION | | |
 | VCO 1/2 (ENV) | NOISE | RANGE | | |
 | VCF VCA 2/2 (ENV) | CUTOFF | PEAK | LEVEL | EG |
 | LFO (LFO) | RATE | INT | TARGET | MODE |
@@ -90,7 +90,7 @@ Three controls do the same job on every page:
 | Setting | What it does |
 | --- | --- |
 | NOISE | White noise beside the oscillator, into the filter. |
-| RANGE | The ribbon's range, on VCO 1/2. On the monotribe, NARROW and WIDE make the ribbon slide continuously from note to note. The FM-1's keys are separate, so FMtribe slides with a glide instead: KEY jumps from note to note; NARROW glides fast (about 60 ms); WIDE glides slowly (about 300 ms). The glide happens when you play a key while still holding another, or when a sequenced note runs into the next; a fresh key after letting go starts on its own note. |
+| RANGE | The ribbon's range, on VCO and on HOME 2/2. On the monotribe, NARROW and WIDE make the ribbon slide continuously from note to note. The FM-1's keys are separate, so FMtribe slides with a glide instead: KEY jumps from note to note; NARROW glides fast (about 60 ms); WIDE glides slowly (about 300 ms). The glide happens when you play a key while still holding another, or when a sequenced note runs into the next; a fresh key after letting go starts on its own note. |
 | MOTION | MOTION VOLUME played back, on or off: see The sequencer. |
 | WAVE (SELECT) | The oscillator: saw, triangle or square. |
 | CUTOFF | The filter's cutoff, from about 80 Hz to about 18 kHz. |
@@ -103,7 +103,7 @@ Three controls do the same job on every page:
 | MODE | FAST and SLOW run all the time. FAST and 1 SHOT start again with each new note. 1 SHOT plays half a cycle when a note starts and then stops, like a second envelope. |
 | WAVE (ALGO) | The LFO: saw (falling), triangle, square, or S&H, a new random level each cycle. |
 | RHYTHM | The drums' volume. |
-| BD DECAY · SN DECAY · HH DECAY | On HOME 2/2 and DRUMS. Each drum's decay, as the popular hardware decay mods give it. 32 is the stock decay; lower is shorter, higher is up to about 15 times as long. |
+| BD DECAY · SN DECAY · HH DECAY | Each drum's decay, as the popular hardware decay mods give it. 32 is the stock decay; lower is shorter, higher is up to about 15 times as long. |
 | SYNTH CH | The MIDI channel the synth plays on and the keys send on, 1 to 16 (1 at first). |
 | DRUM CH | The MIDI channel the drums play on and send on, 1 to 16 (10 at first). |
 | SYNC | INT runs at TEMPO; MIDI follows MIDI clock, start and stop from a computer or another instrument. |
