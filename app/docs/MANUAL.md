@@ -40,14 +40,14 @@ can recover an FM-1 that doesn't start, too. For details, see felucca-bsp's `too
 
 ## 2. The screen
 
-![The LFO's first page: RATE and INT as bars, TARGET VCO and MODE SLOW, 1/2 at the top right](img/screen-playing.png "The LFO's first page")
+![The DRUMS page: RHYTHM and the three decays as bars, the hi-hat pad lit, the F#, G# and A# keys marked](img/screen-playing.png "The DRUMS page")
 
 | Part | What it shows |
 | --- | --- |
 | Header | The name, and BLE, which lights while a computer or tablet is connected over Bluetooth. While you play a key, it shows the note. After a change, a message shows here for a moment, such as CUTOFF 100. At the top right, which page of its button you're on, such as 1/2. |
-| Tabs | The pages' buttons: VCO VCF (SEL), EG VCA (ENV), LFO (LFO) and GLOBAL (GLO). The one you're on is lit, and so is its button. |
+| Tabs | The pages' buttons: VCO VCF (SEL), EG VCA (ENV), LFO (LFO), DRUMS (ARP) and GLOBAL (GLO). The one you're on is lit, and so is its button. |
 | K1 to K4 | What the four knobs do on this page. A knob shows a bar and a value from 0 to 127; a switch shows its position. Each lights for a moment as you turn it. |
-| Drums | The BD, SN and HH pads, with the button that plays each. A pad lights as its drum plays. |
+| Drums | The BD, SN and HH pads, with the black keys that play them on the DRUMS page. A pad lights as its drum plays. |
 | Keys | The 27 keys, black above white. A held key fills up. |
 | Bottom line | The octave, the last MIDI message in, and the volume (MASTER). |
 
@@ -61,10 +61,16 @@ page, if it has more than one. A switch moves one position for each click of the
 | Page (button) | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
 | VCO VCF (SEL) | CUTOFF | PEAK | WAVE | NOISE |
-| EG VCA (ENV) | EG | LEVEL | RHYTHM | |
+| EG VCA (ENV) | EG | LEVEL | | |
 | LFO 1/2 (LFO) | RATE | INT | TARGET | MODE |
 | LFO 2/2 (LFO) | WAVE | | | |
-| GLOBAL (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
+| DRUMS (ARP) | RHYTHM | BD DECAY | SN DECAY | HH DECAY |
+| GLOBAL 1/2 (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
+| GLOBAL 2/2 (GLO) | KEY LIGHT | GLOW | | |
+
+On the DRUMS page, the black keys in the two F♯–G♯–A♯ groups play the bass drum, snare and hi-hat, and glow to
+show it (KEY LIGHT on GUIDE). The white keys still play the synth, so you can play both. The other black keys do
+nothing there.
 
 | Setting | What it does |
 | --- | --- |
@@ -75,6 +81,7 @@ page, if it has more than one. A switch moves one position for each click of the
 | EG | The envelope. DECAY jumps to full when a note starts and dies away over about 1.3 seconds, even while you hold the key. GATE stays full while you hold it. ATTACK rises over about 1.3 seconds while you hold it. All three close quickly when you let go. |
 | LEVEL | The synth's volume. |
 | RHYTHM | The drums' volume. |
+| BD DECAY · SN DECAY · HH DECAY | Each drum's decay, as the popular hardware decay mods give it. 32 is the stock decay; lower is shorter, higher is up to about 15 times as long. |
 | RATE | The LFO's speed: about 1 Hz to 5 kHz in FAST, 0.05 Hz to 18 Hz in SLOW and 1 SHOT. |
 | INT | How much the LFO moves the pitch or the filter, from none at 0. At the top, the pitch swings an octave either way and the cutoff three octaves. |
 | TARGET | What the LFO moves: VCO (the pitch), VCO+VCF (both) or VCF (the cutoff). |
@@ -83,16 +90,17 @@ page, if it has more than one. A switch moves one position for each click of the
 | SYNTH CH | The MIDI channel the synth plays on and the keys send on, 1 to 16 (1 at first). |
 | DRUM CH | The MIDI channel the drums play on and send on, 1 to 16 (10 at first). |
 | BLE MIDI | Bluetooth MIDI on or off. Holding REC for a second does the same. |
+| KEY LIGHT | The keys' lights: OFF; HELD, the keys you hold; or GUIDE, those and, dimly, the keys that do something special on the page you're on, such as the drum pads. |
+| GLOW | How brightly the unlit buttons and the guide keys glow: OFF, LOW or HIGH. |
 
 | Button | What it does |
 | --- | --- |
 | Keys | Play the synth. The last key you pressed sounds, and each new key starts the envelope again, as the monotribe's ribbon does. Let go of it while holding another, and the pitch goes back to the one still held. The volume doesn't follow how hard you play, as on the monotribe. Each key also sends its note on the synth's channel. |
-| ARP · EDIT · FX | Play the bass drum, snare and hi-hat, and send them on the drums' channel. They stand in for the sequencer until it arrives. |
 | OCT− · OCT+ | Set the octave, in six steps from −3 to +2, as the monotribe's six octave positions. |
 | MASTER | Sets the volume. |
 | SAVE | Saves every setting and the octave. SAVE lights while there's something to save. |
 | REC | Press it to find and connect a Bluetooth MIDI device. Hold it for a second to switch Bluetooth off or on. For details, see MIDI and audio. |
-| SEQ · PLAY · HOME | Show their names, and do nothing else yet. SEQ will hold the step sequencer's pages. |
+| SEQ · PLAY · EDIT · HOME · FX | Show their names, and do nothing else yet. SEQ will hold the step sequencer's pages. |
 
 ---
 
@@ -102,7 +110,7 @@ Press SAVE to keep every setting, the octave and whether Bluetooth is on. They c
 next time the FM-1 starts. SAVE stays lit while there are changes to save. Settings saved by an earlier FMtribe
 don't carry over, since this version keeps more of them.
 
-![The GLOBAL page: SYNTH CH 1, DRUM CH 10, BLE MIDI ON](img/screen-settings.png "The GLOBAL page")
+![GLOBAL 2/2: KEY LIGHT GUIDE, GLOW LOW](img/screen-settings.png "The second GLOBAL page")
 
 ---
 
@@ -124,7 +132,7 @@ page; at first the synth is on 1 and the drums on 10.
 | CC 7 | LEVEL. |
 
 The CCs are read on the synth's channel. The keys send notes, with their velocity and poly aftertouch, out over USB
-and Bluetooth on the synth's channel, and the drum buttons send theirs on the drums' channel.
+and Bluetooth on the synth's channel, and the drum pads send theirs on the drums' channel.
 
 Over Bluetooth, FMtribe shows up as "FM-1". On a Mac, open Audio MIDI Setup, choose Window > Show MIDI Studio,
 click the Bluetooth button, then click Connect next to FM-1. On an iPad or iPhone, connect from a music app's
@@ -169,7 +177,7 @@ reader or with its built-in voice.
 
 If you hear no sound, turn MASTER and LEVEL up, and CUTOFF too: with CUTOFF low and PEAK low, the filter lets
 little through. With the DECAY envelope, a note dies away after about a second even while you hold the key; on the
-EG VCA page (ENV), set EG to GATE for a note that lasts. For the drums, turn RHYTHM up on the same page. If the
+EG VCA page (ENV), set EG to GATE for a note that lasts. For the drums, turn RHYTHM up on the DRUMS page (ARP). If the
 pitch wobbles, turn INT down on the LFO page.
 
 If the installer doesn't find the FM-1, use Chrome or Edge, and allow MIDI when the browser asks. Close any other

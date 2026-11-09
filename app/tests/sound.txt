@@ -1,8 +1,9 @@
 # FMtribe's voice, LFO and drums from the panel and MIDI, in the host simulator: ./build.sh --host, then
 #   app/build/host/fmtribe_host app/tests/sound.txt app/build/tests/sound   (or: sh tests/run_tests.sh)
 # The engine's numbers against the estimates are tests/host/tribe_test.c; this is the panel, its pages and the MIDI
-# map. Pages: SEL VCO VCF (CUTOFF PEAK WAVE NOISE), ENV EG VCA (EG LEVEL RHYTHM), LFO 1/2 (RATE INT TARGET MODE),
-# LFO 2/2 (WAVE), GLO GLOBAL (SYNTH CH, DRUM CH, BLE MIDI); K1..K4 edit the page shown.
+# map. Pages: SEL VCO VCF (CUTOFF PEAK WAVE NOISE), ENV EG VCA (EG LEVEL), LFO 1/2 (RATE INT TARGET MODE),
+# LFO 2/2 (WAVE), ARP DRUMS (RHYTHM, BD SN HH DECAY; the F#-G#-A# black keys play BD SN HH), GLO GLOBAL 1/2 (SYNTH
+# CH, DRUM CH, BLE MIDI) and 2/2 (KEY LIGHT, GLOW); K1..K4 edit the page shown.
 wait 600
 expect page 0
 expect wave 0
@@ -36,14 +37,12 @@ turn K1 -20
 expect cutoff 60
 turn K2 5
 expect peak 35
-# ENV: EG, LEVEL, RHYTHM; the button lit, the counter 1/1
+# ENV: EG, LEVEL; the button lit, the counter 1/1
 tap ENV
 wait 30
 expect page 1
 turn K1 1
 expect eg 1
-turn K3 -10
-expect rhythm 80
 shot env.png
 # Gate EG: a held note stays up; let go, it closes fast
 wav gate.wav
@@ -102,21 +101,46 @@ turn K1 100 20
 key 12 up
 wait 200
 wavstop
-# the drums: ARP, EDIT, FX, and MIDI channel 10 (36, 40, 42); a pad lights as it hits
+# the drums: the DRUMS page (ARP), its black keys F#3 G#3 A#3 (keys 1 3 5) and F#4 G#4 A#4 (13 15 17); MIDI channel
+# 10 (36, 40, 42); a pad lights as it hits; the white keys still play the synth there, the other black keys nothing
+tap ARP
+wait 30
+expect page 4
+turn K1 -10
+expect rhythm 80
+expect dim_keys 172074
+expect lit_keys 0
 out
 wav drums.wav
-tap ARP
-wait 250
-tap EDIT
-wait 250
+key 1 down
+wait 30
+expect lit_keys 2
+expect note -1
+key 1 up
+wait 220
+key 3 down
+wait 30
+key 3 up
+wait 220
 expect_out USB 99 24 64
 expect_out USB 99 28 64
-tap FX
+key 17 down
+wait 30
 shot drums.png
-wait 250
+key 17 up
+wait 220
 expect drum0 1
 expect drum1 1
 expect drum2 1
+key 8 down
+wait 30
+expect note -1
+key 8 up
+key 0 down
+wait 30
+expect note 53
+key 0 up
+wait 100
 midi 99 24 64
 wait 200
 midi 99 28 64
@@ -129,6 +153,25 @@ expect drum0 2
 expect drum1 2
 expect drum2 2
 wavstop
+# the decay mods: BD DECAY up, a longer kick
+turn K2 40
+expect bd_dec 72
+wav bd_long.wav
+key 13 down
+wait 30
+key 13 up
+wait 800
+wavstop
+turn K2 -40
+# away from DRUMS, the black keys play the synth again, and no guide
+tap SEL
+wait 30
+expect dim_keys 0
+key 1 down
+wait 30
+expect note 54
+key 1 up
+wait 50
 # channel 1: notes, bend; the monotribe's CCs: 80 EG, 7 LEVEL, 1 INT, 16 RATE, 81 TARGET, 82 MODE, 83 WAVE
 midi B0 50 20
 wait 30
@@ -166,7 +209,7 @@ expect note -1
 # GLOBAL: the synth on channel 2, the drums on 11; then a note on 2 plays, on 1 doesn't
 tap GLO
 wait 30
-expect page 4
+expect page 5
 shot global.png
 turn K1 1
 expect synth_ch 1
@@ -181,10 +224,10 @@ expect note 48
 midi 81 30 00
 midi 9A 24 64
 wait 50
-expect drum0 3
+expect drum0 4
 midi 99 24 64
 wait 50
-expect drum0 3
+expect drum0 4
 out
 key 2 down
 wait 30
@@ -201,6 +244,34 @@ wait 1200
 expect ble 2
 turn K1 -1
 turn K2 -1
+# GLOBAL 2/2: KEY LIGHT off, then held keys only; GLOW
+tap GLO
+wait 30
+expect page 6
+shot global2.png
+turn K1 -2
+expect keylight 0
+key 4 down
+wait 30
+expect lit_keys 0
+key 4 up
+turn K1 1
+expect keylight 1
+key 4 down
+wait 30
+expect lit_keys 16
+key 4 up
+tap ARP
+wait 30
+expect dim_keys 0
+tap GLO
+tap GLO
+wait 30
+expect page 6
+turn K1 1
+expect keylight 2
+turn K2 1
+expect glow 2
 # the settings across a reboot
 tap SAVE
 wait 30
@@ -215,18 +286,23 @@ expect page 0
 # everything up at once stays under full scale
 tap ENV
 turn K2 127
-turn K3 127
+tap ARP
+turn K1 127
 tap SEL
 turn K2 30
 turn K4 127
+tap ARP
 peakreset
 wav loud.wav
+key 2 down
+key 1 down
 key 3 down
-tap ARP
-tap EDIT
-tap FX
+key 5 down
 wait 800
+key 2 up
+key 1 up
 key 3 up
+key 5 up
 wait 200
 wavstop
 expect peak_db_max 0.1

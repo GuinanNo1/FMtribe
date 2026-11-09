@@ -11,7 +11,8 @@
 /* ------------------------------------------------------------- the settings --- */
 /* every setting the panel edits, by number: a knob's 0..127, or a switch's position (its OPT names) */
 enum { P_CUTOFF, P_PEAK, P_WAVE, P_NOISE, P_EG, P_LEVEL, P_RHYTHM, P_LRATE, P_LINT, P_LTARGET, P_LMODE, P_LWAVE,
-       P_SYNTH_CH, P_DRUM_CH, P_BLE, NP };
+       P_SYNTH_CH, P_DRUM_CH, P_BLE, P_BD_DEC, P_SN_DEC, P_HH_DEC, P_KEYLIGHT, P_GLOW, NP };
+enum { KL_OFF, KL_HELD, KL_GUIDE, NKL };   /* KEY LIGHT: none, the keys held, those and the page's key functions */
 typedef struct {
     const char *name;
     uint8_t nopt;                        /* 0: a knob, 0..127; else a switch with this many positions */
@@ -26,6 +27,8 @@ static const char *const LWAVE_OPT[TRIBE_NLWAVE] = {"SAW", "TRI", "SQUARE", "S&H
 static const char *const CH_OPT[16] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14",
                                        "15", "16"};
 static const char *const BLE_OPT[2] = {"ON", "OFF"};   /* (stored as "off", so 0, the default, is on) */
+static const char *const KL_OPT[NKL] = {"OFF", "HELD", "GUIDE"};
+static const char *const GLOW_OPT[3] = {"OFF", "LOW", "HIGH"};
 static const param_t PAR[NP] = {
     {"CUTOFF", 0, 0, 80},
     {"PEAK", 0, 0, 30},
@@ -42,6 +45,11 @@ static const param_t PAR[NP] = {
     {"SYNTH CH", 16, CH_OPT, 0},        /* the MIDI channels: the synth's (in and out), the drums' */
     {"DRUM CH", 16, CH_OPT, 9},
     {"BLE MIDI", 2, BLE_OPT, 0},         /* Bluetooth MIDI on or off (REC held, too) */
+    {"BD DECAY", 0, 0, 32},              /* the drums' decays: 32 stock (the decay mods' pots, as a setting) */
+    {"SN DECAY", 0, 0, 32},
+    {"HH DECAY", 0, 0, 32},
+    {"KEY LIGHT", NKL, KL_OPT, KL_GUIDE},
+    {"GLOW", 3, GLOW_OPT, 1},            /* the unlit buttons' and the guide keys' glow */
 };
 
 /* the pages: a button shows its page and K1..K4 edit it; pressed again, its next page (LFO has two) */
@@ -50,16 +58,18 @@ typedef struct {
     uint8_t button;                      /* plat.h B_* */
     int8_t p[4];                         /* the settings on K1..K4 (-1: none) */
 } page_t;
-enum { PG_VCF, PG_VCA, PG_LFO1, PG_LFO2, PG_GLOBAL, NPG };   /* (SEQ: the step sequencer's pages, next) */
+enum { PG_VCF, PG_VCA, PG_LFO1, PG_LFO2, PG_DRUMS, PG_GLOBAL, PG_GLOBAL2, NPG };   /* (SEQ: the sequencer's, next) */
 static const page_t PAGE[NPG] = {
     {"VCO VCF", B_SEL, {P_CUTOFF, P_PEAK, P_WAVE, P_NOISE}},
-    {"EG VCA", B_ENV, {P_EG, P_LEVEL, P_RHYTHM, -1}},
+    {"EG VCA", B_ENV, {P_EG, P_LEVEL, -1, -1}},
     {"LFO", B_LFO, {P_LRATE, P_LINT, P_LTARGET, P_LMODE}},
     {"LFO", B_LFO, {P_LWAVE, -1, -1, -1}},
+    {"DRUMS", B_ARP, {P_RHYTHM, P_BD_DEC, P_SN_DEC, P_HH_DEC}},   /* and the black keys play them */
     {"GLOBAL", B_GLO, {P_SYNTH_CH, P_DRUM_CH, P_BLE, -1}},
+    {"GLOBAL", B_GLO, {P_KEYLIGHT, P_GLOW, -1, -1}},
 };
 
-#define SET_MAGIC 0x34544D46u            /* "FMT4": the settings record; another magic loads defaults */
+#define SET_MAGIC 0x35544D46u            /* "FMT5": the settings record; another magic loads defaults */
 typedef struct {
     uint32_t magic;
     int8_t octave;                       /* -3 .. +2: six positions, as the monotribe's 64' .. 2' */
@@ -73,16 +83,12 @@ static const uint8_t DRUM_NOTE[TRIBE_NDRUM] = {36, 40, 42};   /* channel 10, the
 /* the controls by their names in plat.h, in its order */
 static const char *const BTN_NAME[NB] = {"FX", "SEL", "ENV", "LFO", "EDIT", "GLO", "HOME", "SAVE", "ARP", "SEQ",
                                          "PLAY", "REC", "OCT-", "OCT+"};
-/* until the sequencer arrives, the left column plays the drums: ARP BD, EDIT SN, FX HH */
-static const uint8_t DRUM_BTN[TRIBE_NDRUM] = {B_ARP, B_EDIT, B_FX};
-static int drum_button(uint32_t k)
-{
-    int d;
-    for (d = 0; d < TRIBE_NDRUM; d++)
-        if (k == DRUM_BTN[d])
-            return d;
-    return -1;
-}
+/* the DRUMS page's pads: the black keys of the F#-G#-A# groups, BD SN HH (key 0 is F3); the white keys still play the
+ * synth there, and the other black keys nothing */
+static const uint8_t PAD_KEY[2][TRIBE_NDRUM] = {{1, 3, 5}, {13, 15, 17}};
+#define PAD_KEYS (1u << 1 | 1u << 3 | 1u << 5 | 1u << 13 | 1u << 15 | 1u << 17)
+#define BLACK_KEYS (PAD_KEYS | 1u << 8 | 1u << 10 | 1u << 20 | 1u << 22 | 1u << 25)
+static int key_pad(uint32_t k);          /* (UI: the drum a key plays on this page, or -1) */
 
 static void engine_update(void)          /* the settings to the engine */
 {
@@ -99,6 +105,9 @@ static void engine_update(void)          /* the settings to the engine */
     p.lfo_target = set.v[P_LTARGET];
     p.lfo_mode = set.v[P_LMODE];
     p.lfo_wave = set.v[P_LWAVE];
+    p.decay[0] = fm_exp2f(((float)set.v[P_BD_DEC] - 32.0f) / 24.0f);   /* 32 stock; 0 x0.4 .. 127 x15 */
+    p.decay[1] = fm_exp2f(((float)set.v[P_SN_DEC] - 32.0f) / 24.0f);
+    p.decay[2] = fm_exp2f(((float)set.v[P_HH_DEC] - 32.0f) / 24.0f);
     tribe_set(&p);
 }
 
@@ -498,6 +507,27 @@ static void ble_device_button(void)
     app_say(ev == BTDEV_CONNECTING ? btdev_word(ev) : "BLE", ev == BTDEV_CONNECTING ? btdev_name() : btdev_word(ev));
 }
 
+/* the lights: the held buttons, the page's button and SAVE (something to save) lit, the others glowing (GLOW); the keys
+ * by KEY LIGHT: none, the held ones, or those and the page's key functions dimly (the DRUMS page's pads) */
+static uint32_t lit_keys_now, dim_keys_now;  /* (the host's checks) */
+static void lights(uint32_t btn, uint32_t keys)
+{
+    uint32_t b = btn | 1u << PAGE[ui.page].button | (set_dirty ? 1u << B_SAVE : 0u), lit = 0, dim = 0;
+    int kl = set.v[P_KEYLIGHT], glow = set.v[P_GLOW];
+    if (kl >= KL_HELD)
+        lit = keys;
+    if (kl == KL_GUIDE && ui.page == PG_DRUMS)
+        dim = PAD_KEYS;
+    lit_keys_now = lit;
+    dim_keys_now = dim;
+    if (glow == 0 && dim) {                  /* the guide wants a glow: the keys' then, but not the buttons' */
+        glow = 1;
+        plat_lights(b, lit, 0, dim, glow);
+    } else {
+        plat_lights(b, lit, glow ? ~b & ((1u << NB) - 1u) : 0, dim, glow);
+    }
+}
+
 static void input(void)
 {
     uint32_t keys, btn = plat_buttons(), k;
@@ -507,6 +537,17 @@ static void input(void)
     for (k = 0; k < NKEYS; k++) {            /* key 0 is F3 (MIDI 53) */
         uint32_t bit = 1u << k, v;
         int32_t note = 53 + (int32_t)k + 12 * set.octave;
+        if (ui.page == PG_DRUMS && (BLACK_KEYS & bit) && (keys & bit)) {   /* the DRUMS page's black keys (a key let
+                                                                             * go goes on: a note it held stops) */
+            int d = key_pad(k);
+            if (d >= 0 && (keys & bit) && !(ui.keys & bit)) {
+                drum(d);
+                plat_midi_send(0x09u | (0x90u | set.v[P_DRUM_CH]) << 8 | (uint32_t)DRUM_NOTE[d] << 16 | 100u << 24,
+                               TO_USB | TO_BLE);
+                plat_midi_send(0x08u | (0x80u | set.v[P_DRUM_CH]) << 8 | (uint32_t)DRUM_NOTE[d] << 16, TO_USB | TO_BLE);
+            }
+            continue;
+        }
         if ((keys & bit) && !(ui.keys & bit)) {
             v = touch_vel(k);
             ui.vel[k] = (uint8_t)v;
@@ -529,12 +570,7 @@ static void input(void)
         uint32_t bit = 1u << k;
         if (!(btn & bit) || (ui.btn & bit))
             continue;
-        if (drum_button(k) >= 0) {           /* ARP, EDIT, FX: BD, SN, HH (and out on the drums' channel) */
-            int d = drum_button(k);
-            drum(d);
-            plat_midi_send(0x09u | (0x90u | set.v[P_DRUM_CH]) << 8 | (uint32_t)DRUM_NOTE[d] << 16 | 100u << 24, TO_USB | TO_BLE);
-            plat_midi_send(0x08u | (0x80u | set.v[P_DRUM_CH]) << 8 | (uint32_t)DRUM_NOTE[d] << 16, TO_USB | TO_BLE);
-        } else if (is_page_button(k)) {
+        if (is_page_button(k)) {
             page_button(k);
         } else if (k == B_OCTDN)
             octave_step(-1);
@@ -599,11 +635,22 @@ static void input(void)
         ui.redraw = 1;
     ui.keys = keys;
     ui.btn = btn;
-    plat_glow(1);                            /* the unlit buttons glow, readable in the dark */
-    plat_leds(btn | 1u << PAGE[ui.page].button | (set_dirty ? 1u << B_SAVE : 0u), keys);   /* the page's button lit */
+    lights(btn, keys);
 }
 
 void app_input_only(void) { input(); }
+
+static int key_pad(uint32_t k)
+{
+    int g, d;
+    if (ui.page != PG_DRUMS)
+        return -1;
+    for (g = 0; g < 2; g++)
+        for (d = 0; d < TRIBE_NDRUM; d++)
+            if (PAD_KEY[g][d] == k)
+                return d;
+    return -1;
+}
 
 static void cell(int32_t x, int32_t y, int32_t w, const char *s, int on)   /* a labelled box, lit when on */
 {
@@ -710,8 +757,11 @@ static void draw(void)
     for (i = 0; i < TRIBE_NDRUM; i++) {
         int lit = ui.drum_at[i] && now - ui.drum_at[i] < 150u;
         cell(44 + (int32_t)i * 46, 104, 44, DRUM_NAME[i], lit);
-        cv_text(44 + (int32_t)i * 46 + (44 - text_w(&FONT_XS, BTN_NAME[DRUM_BTN[i]])) / 2, 125, &FONT_XS,
-                BTN_NAME[DRUM_BTN[i]], C_DIM);
+        {
+            static const char *const KN[TRIBE_NDRUM] = {"F#", "G#", "A#"};   /* the keys that play them */
+            cv_text(44 + (int32_t)i * 46 + (44 - text_w(&FONT_XS, KN[i])) / 2, 125, &FONT_XS, KN[i],
+                    ui.page == PG_DRUMS ? C_AMB : C_DIM);
+        }
     }
     cv_blit(0, 36);
     /* the keys, black above white: a held key fills to its velocity (amber), its pressure over that (white) */
@@ -720,7 +770,7 @@ static void draw(void)
         key_cell(4 + (int32_t)i * 14, 14, 13, 14, WK[i], C_DIM);
     for (i = 0; i < 11u; i++) {
         static const uint8_t AT[11] = {0, 1, 2, 4, 5, 7, 8, 9, 11, 12, 14};   /* the white key each one follows */
-        key_cell(4 + (int32_t)AT[i] * 14 + 8, 0, 11, 12, BK[i], C_LINE);
+        key_cell(4 + (int32_t)AT[i] * 14 + 8, 0, 11, 12, BK[i], key_pad(BK[i]) >= 0 ? C_AMB : C_LINE);
     }
     octave_text(t);
     cv_text(4, 36, &FONT_XS, "OCT", C_GRAY);
@@ -822,7 +872,8 @@ void app_frame(void)
 int app_expect(const char *what, int *got)
 {
     static const char *const P[NP] = {"cutoff", "peak", "wave", "noise", "eg", "level", "rhythm", "rate", "int",
-                                      "target", "mode", "lwave", "synth_ch", "drum_ch", "ble_off"};
+                                      "target", "mode", "lwave", "synth_ch", "drum_ch", "ble_off", "bd_dec", "sn_dec",
+                                      "hh_dec", "keylight", "glow"};
     int i;
     for (i = 0; i < NP; i++)                 /* a setting by its name: its 0..127, or its switch's position */
         if (!strcmp(what, P[i])) {
@@ -831,10 +882,14 @@ int app_expect(const char *what, int *got)
         }
     if (!strcmp(what, "octave"))
         *got = set.octave;
-    else if (!strcmp(what, "page"))         /* PG_*: 0 VCO VCF, 1 EG VCA, 2 LFO 1, 3 LFO 2, 4 GLOBAL */
+    else if (!strcmp(what, "page"))         /* PG_*: 0 VCO VCF, 1 EG VCA, 2 LFO 1, 3 LFO 2, 4 DRUMS, 5 GLOBAL 1, 6 2 */
         *got = ui.page;
     else if (!strcmp(what, "note"))
         *got = voice_note;
+    else if (!strcmp(what, "dim_keys"))     /* the keys glowing (KEY LIGHT GUIDE), and lit */
+        *got = (int)dim_keys_now;
+    else if (!strcmp(what, "lit_keys"))
+        *got = (int)lit_keys_now;
     else if (!strcmp(what, "dirty"))
         *got = set_dirty;
     else if (!strcmp(what, "vel"))           /* the last key's velocity and pressure */

@@ -26,6 +26,7 @@ typedef struct {
     float rhythm;      /* 0..1: RHYTHM, the drums' shared level */
     float lfo_rate;    /* 0..1: RATE, exponential over the MODE's range (FAST 1 Hz..5 kHz, SLOW and 1SHOT 0.05..18 Hz) */
     float lfo_int;     /* 0..1: INT., 0 none */
+    float decay[3];    /* the drums' decays, BD SN HH: a multiple of the stock time (1 stock; the decay mods' range) */
     uint8_t wave;      /* TRIBE_SAW .. */
     uint8_t eg;        /* TRIBE_DECAY .. */
     uint8_t lfo_target;   /* TRIBE_LFO_VCO .. */

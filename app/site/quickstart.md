@@ -27,15 +27,17 @@ the screen shows which one, such as 1/2.
 | Page (button) | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
 | VCO VCF (SEL) | CUTOFF | PEAK | WAVE | NOISE |
-| EG VCA (ENV) | EG | LEVEL | RHYTHM | |
+| EG VCA (ENV) | EG | LEVEL | | |
 | LFO 1/2 (LFO) | RATE | INT | TARGET | MODE |
 | LFO 2/2 (LFO) | WAVE | | | |
-| GLOBAL (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
+| DRUMS (ARP) | RHYTHM | BD DECAY | SN DECAY | HH DECAY |
+| GLOBAL 1/2 (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
+| GLOBAL 2/2 (GLO) | KEY LIGHT | GLOW | | |
 
 | Do this | And |
 | --- | --- |
 | Play the keys | The synth sounds. Each new key starts its envelope again. |
-| ARP · EDIT · FX | Bass drum, snare, hi-hat. |
+| On DRUMS (ARP), the F♯ G♯ A♯ black keys | Bass drum, snare, hi-hat. The white keys still play the synth. |
 | OCT− · OCT+ | Octave down or up. |
 | Turn MASTER | Volume. |
 | SAVE | Keeps your settings for the next start (it lights when there's something to save). |

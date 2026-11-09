@@ -16,7 +16,8 @@
 #define SR2 (2.0f * TRIBE_SR)                   /* the VCO and filter run 2x oversampled */
 
 /* ------------------------------------------------------------ the settings --- */
-static tribe_params_t par = {.cutoff = 0.6f, .peak = 0.3f, .level = 0.8f, .rhythm = 0.7f, .lfo_rate = 0.5f};
+static tribe_params_t par = {.cutoff = 0.6f, .peak = 0.3f, .level = 0.8f, .rhythm = 0.7f, .lfo_rate = 0.5f,
+                             .decay = {1.0f, 1.0f, 1.0f}};
 static volatile uint32_t par_seq;               /* bumped by tribe_set: the render copies at a block's start */
 static tribe_params_t live;                     /* the render's copy */
 static uint32_t live_seq;
@@ -207,6 +208,15 @@ static float sn_namp, sn_hp, hh_amp, hh_s1, hh_s2;
 static volatile uint8_t drum_ev;                /* bits: TRIBE_BD .. triggered, taken by the render */
 static float k_bd, k_sn, k_snn, k_hh, r_bd, r_sn, hp_sn_g, hh_g, hh_r;
 
+/* the decays: stock, or longer or shorter as the hardware decay mods make them (the SN's tone and noise together) */
+static void drum_decays(void)
+{
+    k_bd = fm_expf(-1.0f / (BD_TAU * live.decay[0] * SR));
+    k_sn = fm_expf(-1.0f / (SN_TAU * live.decay[1] * SR));
+    k_snn = fm_expf(-1.0f / (SN_NTAU * live.decay[1] * SR));
+    k_hh = fm_expf(-1.0f / (HH_TAU * live.decay[2] * SR));
+}
+
 static inline float ping(ping_t *p, float hz, float k, float rinc)
 {
     float s, inc = hz * (1.0f / SR);
@@ -348,6 +358,7 @@ void tribe_render(float *out, uint32_t n)
         if (par.lfo_mode != live.lfo_mode)
             lfo_done = 1;                       /* (switching into 1SHOT waits for a note) */
         live = par;
+        drum_decays();
     }
     if (ev_on) {                                /* note on: the EG from the top (and the VCO's phase kept) */
         ev_on = 0;
@@ -424,6 +435,11 @@ void tribe_set(const tribe_params_t *p)
         par.lfo_mode = TRIBE_LFO_FAST;
     if (par.lfo_wave >= TRIBE_NLWAVE)
         par.lfo_wave = TRIBE_LFO_TRI;
+    {
+        int d;
+        for (d = 0; d < 3; d++)
+            par.decay[d] = fm_clampf(par.decay[d], 0.25f, 16.0f);
+    }
     par_seq++;
 }
 
@@ -455,10 +471,6 @@ void tribe_init(void)
     k_eg = fm_expf(-1.0f / (EG_TAU * SR));
     k_rel = fm_expf(-1.0f / (REL_TAU * SR));
     k_vca = 1.0f - fm_expf(-1.0f / (VCA_TAU * SR));
-    k_bd = fm_expf(-1.0f / (BD_TAU * SR));
-    k_sn = fm_expf(-1.0f / (SN_TAU * SR));
-    k_snn = fm_expf(-1.0f / (SN_NTAU * SR));
-    k_hh = fm_expf(-1.0f / (HH_TAU * SR));
     r_bd = 1.0f / (BD_RISE * SR);
     r_sn = 1.0f / (SN_RISE * SR);
     g = fm_tanf(FM_PI * 400.0f / SR);
@@ -470,5 +482,6 @@ void tribe_init(void)
     lfo_done = 1;
     lfo_sh = 0.0f;
     live = par;
+    drum_decays();
     live_seq = par_seq;
 }
