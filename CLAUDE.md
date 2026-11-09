@@ -14,7 +14,7 @@ App in `app/`, fm1-base in `base/` (submodule, pinned at b0976f2). Build: `./bui
 
 ## Platform constraints
 - `float` DSP only: no `double` (the build rejects it). Use `fastmath.h` (`fm_sinf`, `fm_exp2f`, ...).
-- RAM is the constraint: ~22 KB free after template + BLE + BLE devices; ~370 KB flash. Check the build's report.
+- RAM is the constraint: ~16 KB free (.data+.bss 81,924 of 98,304 B in 0.1-alpha: template + BLE + BLE devices + mirror). Check the build's report; `ble_central = false` or `mirror = false` win RAM back if needed.
 - DSP units go in `app/` subdirs listed in `app/fm1.toml` `include`/`o2` (as GIO-1's `dsp/gio.c`).
 - Audio: 44.1 kHz, `APP_BLOCK` 256 frames, `app_render` in the audio interrupt. A second core is available if needed.
 - fm1-base is beta; move the pin deliberately (BUILDING.md). Keep `./build.sh --no-ble` working.
