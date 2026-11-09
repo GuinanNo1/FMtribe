@@ -75,4 +75,5 @@ drums (pad()). Manual section 4
 Not yet: Flux.
 LFO (0.3): tribe.c, rates from the manual; depth (±1 oct pitch, ±3 oct cutoff), INT square-law taper, 1SHOT on the
 SLOW range and the falling saw are GUESSES.
-Next: user testing in the emulator; then Flux (continuous synth recording), drum rolls, ribbon modes.
+Next: user testing in the emulator (v0.4.4-alpha); then Flux (continuous synth recording). Open: drums over 16 keys in
+16-step mode (user undecided); SEL and EDIT buttons free; DRUMS page overlaps HOME.
