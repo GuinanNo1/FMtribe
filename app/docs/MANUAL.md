@@ -49,7 +49,7 @@ can recover an FM-1 that doesn't start, too. For details, see felucca-bsp's `too
 | Header | The page you're on, such as HOME, and BLE and DEV, which light while a computer or a Bluetooth MIDI device is connected. At the right, which page of its button it is, such as 2/2, and while you play a key, the note. After a change, a message shows here for a moment, such as CUTOFF 100. |
 | Tabs | The pages' buttons: HOME, VCO (ENV), LFO, DRUM (ARP), SEQ and GLO. The one you're on is lit, and so is its button. |
 | K1 to K4 | What the four knobs do on this page. A knob shows a bar and its value; a switch shows its position. Each lights for a moment as you turn it. |
-| Below the knobs | On the synth pages, the VCO's WAVE (SELECT) and, on LFO, the LFO's WAVE (ALGO). On DRUMS, the pads. On STEP, the pattern, a row a part. On EDIT, the synth's steps as a piano roll. |
+| Below the knobs | On the synth pages, the VCO's WAVE (SELECT) and, on LFO, the LFO's WAVE (ALGO). On DRUMS, BD, SN and HH, each lighting as it plays. On STEP, the pattern, a row a part. On EDIT, the synth's steps as a piano roll. |
 | Keys | The 27 keys, black above white. A held key fills up. |
 | Bottom line | The octave, PLAY or STOP and the tempo (/2 with HALF TEMPO, REC when armed, GATE with GATE TIME HOLD), the last MIDI message in, and the volume (MASTER). |
 
@@ -109,7 +109,7 @@ Three controls do the same job on every page:
 | SYNC | INT runs at TEMPO; MIDI follows MIDI clock, start and stop from a computer or another instrument. |
 | CLOCK OUT | Sends MIDI clock, start and stop, so other gear follows FMtribe. |
 | BLE MIDI | Bluetooth MIDI on or off. |
-| KEY LIGHT | The keys' lights: OFF; HELD, the keys you hold; or GUIDE, those and the keys that do something special on the page you're on, such as the drum pads and the step LEDs. |
+| KEY LIGHT | The keys' lights: OFF; HELD, the keys you hold; or GUIDE, those and the keys that do something special on the page you're on, such as the step LEDs. |
 | GLOW | How brightly the unlit buttons and the guide keys glow: OFF, LOW or HIGH. |
 | PREVIEW | DRUM PREVIEW, the monotribe's Global setting 6. ON (at first): the BD, SN and HH part keys play their drum as they pick it. OFF: they pick the part silently. |
 | DEVICE | On DEVICES, the Bluetooth MIDI device to connect to: see MIDI and audio. |
@@ -124,9 +124,12 @@ Three controls do the same job on every page:
 
 ### The drums
 
-On the DRUMS page, the black keys in the two F♯–G♯–A♯ groups play the bass drum, snare and hi-hat, and glow to
-show it (KEY LIGHT on GUIDE). The white keys still play the synth, so you can play both. The other black keys do
-nothing there.
+The DRUMS page (ARP) has RHYTHM and a decay for each drum. The keys play the synth there, black and white, as on
+every page but STEP. To play the drums by hand, use the part keys on STEP (F♯3, G♯3, A♯3), as the monotribe's part
+buttons do, or MIDI on the drums' channel.
+
+The BD, SN and HH DECAY knobs aren't on a stock monotribe, which has only RHYTHM for the drums. They copy a popular
+hardware mod; at 32, each drum sounds as stock.
 
 ### The sequencer
 
@@ -218,7 +221,7 @@ turns the recorded levels off and on without losing them. INITIALIZE SYNTH and I
 
 To record, press REC (it lights), then PLAY. While REC is on, the keys play and record the synth on any page,
 landing on the nearest step (or half-step with 16-STEP SYNTH), and how long you hold a note sets its gate time. On
-the DRUMS page the pads record the drums. Recording adds to the pattern; to start again, use INITIALIZE. Press REC
+STEP, the BD, SN and HH part keys play and record their drums, as the monotribe's part buttons do in REC. Recording adds to the pattern; to start again, use INITIALIZE. Press REC
 again to stop recording.
 
 The pattern is kept with the settings when you press SAVE.
@@ -287,7 +290,7 @@ page (GLO, 1/3); at first the synth is on 1 and the drums on 10.
 
 The CCs are read on the synth's channel. The sequencer sends its notes out too, on the same channels, and MIDI
 clock, start and stop with CLOCK OUT on. The keys send notes, with their velocity and poly aftertouch, out over USB
-and Bluetooth on the synth's channel, and the drum pads send theirs on the drums' channel.
+and Bluetooth on the synth's channel, and the part keys send their drums on the drums' channel.
 
 Over Bluetooth, FMtribe shows up as "FM-1". On a Mac, open Audio MIDI Setup, choose Window > Show MIDI Studio,
 click the Bluetooth button, then click Connect next to FM-1. On an iPad or iPhone, connect from a music app's

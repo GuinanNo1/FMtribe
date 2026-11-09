@@ -338,9 +338,8 @@ tapkey 11
 wait 30
 key 13 up
 expect gate_hold 1
-# REC while playing: keys play and record the synth on any page, the DRUMS page's pads the drums
-tap ARP
-wait 30
+# REC while playing: the keys play and record the synth on any page; on STEP the part keys play and record their
+# drums, as the monotribe's part buttons do
 tap REC
 wait 30
 expect rec 1
@@ -350,7 +349,7 @@ key 12 down
 wait 60
 key 12 up
 release PLAY
-wait 300
+wait 250
 key 5 down
 wait 30
 key 5 up
@@ -362,8 +361,8 @@ expect rec 0
 expect note0 65
 expect gate0 0
 expect on0 17
-tap SEQ
-wait 30
+expect part 3
+expect on3 54645
 key 13 down
 wait 30
 tapkey 11

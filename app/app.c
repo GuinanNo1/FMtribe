@@ -124,11 +124,6 @@ static const uint8_t DRUM_NOTE[TRIBE_NDRUM] = {36, 40, 42};   /* channel 10, the
 /* the controls by their names in plat.h, in its order */
 static const char *const BTN_NAME[NB] = {"FX", "SEL", "ENV", "LFO", "EDIT", "GLO", "HOME", "SAVE", "ARP", "SEQ",
                                          "PLAY", "REC", "OCT-", "OCT+"};
-/* the DRUMS page's pads: the black keys of the F#-G#-A# groups, BD SN HH (key 0 is F3); the white keys still play the
- * synth there, and the other black keys nothing */
-static const uint8_t PAD_KEY[2][TRIBE_NDRUM] = {{1, 3, 5}, {13, 15, 17}};
-#define PAD_KEYS (1u << 1 | 1u << 3 | 1u << 5 | 1u << 13 | 1u << 15 | 1u << 17)
-static int key_pad(uint32_t k);          /* (UI: the drum a key plays on this page, or -1) */
 static const uint8_t WHITE[16] = PLAT_WHITE_KEYS;   /* the white keys, low to high: the sequencer's slots */
 static int white_index(uint32_t k)       /* a key's place among the white keys, or -1 for a black one */
 {
@@ -757,8 +752,6 @@ static void lights(uint32_t btn, uint32_t keys)
         }
         dim |= PART_KEYS | 1u << KEY_ACTIVE | 1u << KEY_GATE;
         lit |= 1u << PART_KEY[part] | (gate_hold ? 1u << KEY_GATE : 0u);
-    } else if (kl == KL_GUIDE && !rec_armed && ui.page == PG_DRUMS) {
-        dim = PAD_KEYS;
     }
     lit_keys_now = lit;
     dim_keys_now = dim & ~lit & ~mid;
@@ -785,7 +778,7 @@ static void synth_key(uint32_t k, int32_t note, uint32_t v)
         rec_note_on(note);
 }
 
-static void pad(int d)                   /* a drum played from the keys: heard, sent, and recorded */
+static void pad(int d)                   /* a drum played from its part key while REC is on: heard, sent, recorded */
 {
     drum(d);
     plat_midi_send(0x09u | (0x90u | set.v[P_DRUM_CH]) << 8 | (uint32_t)DRUM_NOTE[d] << 16 | 100u << 24, TO_USB | TO_BLE);
@@ -882,8 +875,14 @@ static void step_key(uint32_t k, int w, int32_t note)
     int part = set.v[P_PART], i, sl;
     if (w < 0) {                             /* the black keys: a part (a drum's heard), ACTIVE STEP, GATE TIME */
         for (i = 0; i < SEQ_NPART; i++)
-            if (PART_KEY[i] == k)
-                part_pick(i);
+            if (PART_KEY[i] == k) {
+                if (rec_armed && i != SEQ_SYNTH) {   /* REC on: the part button plays its drum, recorded */
+                    set.v[P_PART] = (uint16_t)i;
+                    pad(i - SEQ_BD);
+                } else {
+                    part_pick(i);
+                }
+            }
         if (k == KEY_ACTIVE)
             app_say("ACTIVE STEP", "HOLD, PICK STEPS");
         else if (k == KEY_GATE)
@@ -954,17 +953,11 @@ static void step_key(uint32_t k, int w, int32_t note)
 
 static void key_press(uint32_t k, int32_t note)
 {
-    int w = white_index(k), d = key_pad(k);
-    if (d >= 0) {                            /* DRUMS: the pads (recorded while REC records) */
-        pad(d);
-        return;
-    }
+    int w = white_index(k);
     if (ui.page == PG_SEQ) {
         step_key(k, w, note);
         return;
     }
-    if (ui.page == PG_DRUMS && w < 0 && !rec_armed)   /* (DRUMS: the other black keys nothing) */
-        return;
     synth_key(k, note, touch_vel(k));
     if (ui.page == PG_EDIT && !rec_armed && set.v[P_PART] == SEQ_SYNTH) {   /* EDIT: the note in, on to the next */
         set.pat.note[ed_slot] = (uint8_t)note;
@@ -1130,18 +1123,6 @@ static void input(void)
 }
 
 void app_input_only(void) { input(); }
-
-static int key_pad(uint32_t k)
-{
-    int g, d;
-    if (ui.page != PG_DRUMS)
-        return -1;
-    for (g = 0; g < 2; g++)
-        for (d = 0; d < TRIBE_NDRUM; d++)
-            if (PAD_KEY[g][d] == k)
-                return d;
-    return -1;
-}
 
 static void cell(int32_t x, int32_t y, int32_t w, const char *s, int on)   /* a labelled box, lit when on */
 {
@@ -1314,11 +1295,9 @@ static void draw(void)
         cv_text(4, 116, &FONT_XS, btdev_busy() ? "SAVE LETS IT GO" : "TURN K1 TO PICK, SAVE CONNECTS", C_DIM);
     } else if (ui.page == PG_DRUMS) {
         cv_text(4, 108, &FONT_XS, "DRUMS", C_GRAY);
-        for (i = 0; i < TRIBE_NDRUM; i++) {
-            static const char *const KN[TRIBE_NDRUM] = {"F#", "G#", "A#"};   /* the keys that play them */
+        for (i = 0; i < TRIBE_NDRUM; i++) {   /* each lights as it plays */
             int lit = ui.drum_at[i] && now - ui.drum_at[i] < 150u;
             cell(44 + (int32_t)i * 46, 104, 44, DRUM_NAME[i], lit);
-            cv_text(44 + (int32_t)i * 46 + (44 - text_w(&FONT_XS, KN[i])) / 2, 125, &FONT_XS, KN[i], C_AMB);
         }
     } else if (PAGE[ui.page].button != B_GLO) {
         /* the switches on their own encoders: SELECT the VCO's WAVE; on LFO, ALGO its WAVE */
@@ -1342,7 +1321,7 @@ static void draw(void)
         key_cell(4 + (int32_t)i * 14, 14, 13, 14, WK[i], C_DIM);
     for (i = 0; i < 11u; i++) {
         static const uint8_t AT[11] = {0, 1, 2, 4, 5, 7, 8, 9, 11, 12, 14};   /* the white key each one follows */
-        key_cell(4 + (int32_t)AT[i] * 14 + 8, 0, 11, 12, BK[i], key_pad(BK[i]) >= 0 ? C_AMB : C_LINE);
+        key_cell(4 + (int32_t)AT[i] * 14 + 8, 0, 11, 12, BK[i], C_LINE);
     }
     octave_text(t);
     cv_text(4, 36, &FONT_XS, "OCT", C_GRAY);

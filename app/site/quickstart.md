@@ -44,9 +44,9 @@ and PRESET picks the part (SYNTH, BD, SN, HH). On LFO, ALGO sets the LFO's wave.
 | Do this | And |
 | --- | --- |
 | Play the keys | The synth sounds. Each new key starts its envelope again. |
-| On DRUMS (ARP), the F♯ G♯ A♯ black keys | Bass drum, snare, hi-hat. The white keys still play the synth. |
+| On STEP (SEQ), the F♯3 G♯3 A♯3 black keys | Pick and play the bass drum, snare, hi-hat. |
 | PLAY | Start or stop the pattern. |
-| REC, then PLAY | Record: the keys (and the DRUMS pads) land on the nearest step. |
+| REC, then PLAY | Record: the keys land on the nearest step; on STEP, the part keys record the drums. |
 | Turn MASTER | Volume. |
 | SAVE | Keeps your settings for the next start (it lights when there's something to save). |
 

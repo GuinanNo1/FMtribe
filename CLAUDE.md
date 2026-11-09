@@ -46,7 +46,7 @@ UI (0.4): pages on buttons (app.c PAGE[]), HOME first (the start page, 1/2: LEVE
 right: a button shows its first page,
 pressed again its next; K1–K4 edit the page; the header shows the page name (left, in place of the app name) and x/y (right). ENV VCO 1/2 (NOISE
 RANGE; RANGE WIDE/NARROW = slow/fast glide (tribe glide, legato only; times GUESS), KEY none) and VCF VCA 2/2 (CUTOFF PEAK LEVEL EG); LFO (RATE INT TARGET
-MODE); ARP DRUMS (RHYTHM, BD/SN/HH DECAY; F#-G#-A# black keys are pads); SEQ STEP 1/2 (TEMPO SWING STEPS GATE) and
+MODE); ARP DRUMS (RHYTHM, BD/SN/HH DECAY = a hardware mod, not stock; keys play the synth, no pads); SEQ STEP 1/2 (TEMPO SWING STEPS GATE) and
 EDIT 2/2 (STEP NOTE GATE ON, piano roll); GLO MIDI 1/3 (SYNTH CH DRUM CH SYNC CLOCK OUT), GLOBAL 2/3 (BLE MIDI, KEY
 LIGHT, GLOW, PREVIEW = DRUM PREVIEW, default on), DEVICES 3/3 (K1 picks, SAVE connects/lets go; scans while the page is up). Constant everywhere: OCT-/+
 the octave; SELECT the VCO WAVE (on SEQ pages the step cursor ed_slot); ALGO the LFO WAVE on LFO; PRESET the part on SEQ
@@ -66,7 +66,8 @@ key + step = half-step), D#4 ACTIVE STEP (hold + steps), F#4 GATE TIME: held whi
 keeps recorded gates, 8 HALF TEMPO). MOTION VOLUME: pat.vol[slot] (SEQ_NO_VOL none) via seq_cb_motion ->
 tribe_motion (replaces LEVEL); ACTIVE STEP held while playing = keys ribbon (left 0, right 127), recorded with REC;
 LEVEL turned while recording is recorded too; MOTION switch plays them back. REC arms;
-armed, keys play+record synth on any page (on STEP the white keys), DRUMS pads record drums. Manual section 4
+armed, keys play+record synth on any page (on STEP the white keys); on STEP the BD/SN/HH part keys play+record
+drums (pad()). Manual section 4
 "Setting gate times" documents the gate methods. Manual screenshots: app/tests/screens.txt -> app/docs/img.
 Not yet: Flux, drum rolls (Ver.2: GATE TIME + ribbon with a drum part; FX planned too).
 LFO (0.3): tribe.c, rates from the manual; depth (±1 oct pitch, ±3 oct cutoff), INT square-law taper, 1SHOT on the
