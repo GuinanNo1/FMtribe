@@ -1,12 +1,16 @@
-# FMtribe's voice and drums from the panel and MIDI, in the host simulator: ./build.sh --host, then
+# FMtribe's voice, LFO and drums from the panel and MIDI, in the host simulator: ./build.sh --host, then
 #   app/build/host/fmtribe_host app/tests/sound.txt app/build/tests/sound   (or: sh tests/run_tests.sh)
-# The engine's numbers against the estimates are tests/host/tribe_test.c; this is the panel and the MIDI map.
+# The engine's numbers against the estimates are tests/host/tribe_test.c; this is the panel, its pages and the MIDI
+# map. Pages: SEL VCO VCF (CUTOFF PEAK WAVE NOISE), ENV EG VCA (EG LEVEL RHYTHM), LFO 1/2 (RATE INT TARGET MODE),
+# LFO 2/2 (WAVE), GLO GLOBAL (SYNTH CH, DRUM CH, BLE MIDI); K1..K4 edit the page shown.
 wait 600
-# the defaults: saw, Decay EG, CUTOFF 80, PEAK 30, NOISE 0, LEVEL 100, RHYTHM 90
+expect page 0
 expect wave 0
 expect eg 0
-expect knob0 80
-expect knob4 90
+expect cutoff 80
+expect rhythm 90
+expect mode 1
+expect lwave 1
 shot panel.png
 # a held key: Decay EG, sounding at once, gone by ~1.3 s even while held
 wav decay.wav
@@ -21,22 +25,26 @@ expect peak_db_max -60
 key 7 up
 wait 100
 wavstop
-# PRESET and ALGO: the switches turn round; K1..K4 and SELECT the knobs
-turn PRESET 1
+# VCO VCF: K3 the wave (a switch: a position a detent, no wrap), K1 CUTOFF, K2 PEAK
+turn K3 1
 expect wave 1
-turn PRESET 1
+turn K3 5
 expect wave 2
-turn PRESET 1
+turn K3 -2
 expect wave 0
-turn ALGO 1
-expect eg 1
 turn K1 -20
-expect knob0 60
+expect cutoff 60
 turn K2 5
-expect knob1 35
-turn SELECT -10
-expect knob4 80
-shot turned.png
+expect peak 35
+# ENV: EG, LEVEL, RHYTHM; the button lit, the counter 1/1
+tap ENV
+wait 30
+expect page 1
+turn K1 1
+expect eg 1
+turn K3 -10
+expect rhythm 80
+shot env.png
 # Gate EG: a held note stays up; let go, it closes fast
 wav gate.wav
 key 0 down
@@ -50,11 +58,43 @@ peakreset
 wait 100
 expect peak_db_max -60
 wavstop
-# a CUTOFF sweep with the PEAK high, Attack EG
-turn ALGO 1
-expect eg 2
+# LFO: page 1/2, again 2/2, again 1/2
+tap LFO
+wait 30
+expect page 2
+tap LFO
+wait 30
+expect page 3
+shot lfo2.png
+turn K1 1
+expect lwave 2
+tap LFO
+wait 30
+expect page 2
+# a slow square on the VCO, INT up: a trill
+turn K2 100
+expect int 100
+turn K4 -1
+expect mode 0
+turn K4 1
+expect mode 1
+turn K1 20
+expect rate 84
+shot lfo1.png
+wav trill.wav
+key 12 down
+wait 1500
+key 12 up
+wait 200
+wavstop
+# a page button's page keeps K1..K4: on LFO, K1 is RATE, not CUTOFF
+expect cutoff 60
+# the CUTOFF sweep with the PEAK high, back on VCO VCF
+tap SEL
+wait 30
+expect page 0
 turn K2 70
-expect knob1 105
+expect peak 105
 wav sweep.wav
 key 12 down
 turn K1 -60 20
@@ -62,16 +102,16 @@ turn K1 100 20
 key 12 up
 wait 200
 wavstop
-# the drums: EDIT, GLO, HOME, and MIDI channel 10 (36, 40, 42); a pad lights as it hits
+# the drums: ARP, EDIT, FX, and MIDI channel 10 (36, 40, 42); a pad lights as it hits
 out
 wav drums.wav
-tap EDIT
+tap ARP
 wait 250
-tap GLO
+tap EDIT
 wait 250
 expect_out USB 99 24 64
 expect_out USB 99 28 64
-tap HOME
+tap FX
 shot drums.png
 wait 250
 expect drum0 1
@@ -89,7 +129,7 @@ expect drum0 2
 expect drum1 2
 expect drum2 2
 wavstop
-# channel 1: notes, bend; CC 80 the EG shape (32 decay, 64 gate, 96 attack), CC 7 LEVEL
+# channel 1: notes, bend; the monotribe's CCs: 80 EG, 7 LEVEL, 1 INT, 16 RATE, 81 TARGET, 82 MODE, 83 WAVE
 midi B0 50 20
 wait 30
 expect eg 0
@@ -98,7 +138,18 @@ wait 30
 expect eg 1
 midi B0 07 40
 wait 30
-expect knob3 64
+expect level 64
+midi B0 01 10
+midi B0 10 30
+midi B0 51 60
+midi B0 52 20
+midi B0 53 7F
+wait 30
+expect int 16
+expect rate 48
+expect target 2
+expect mode 0
+expect lwave 3
 expect dirty 1
 midi 90 30 64
 wait 100
@@ -112,6 +163,44 @@ expect note -1
 midi 91 30 64
 wait 50
 expect note -1
+# GLOBAL: the synth on channel 2, the drums on 11; then a note on 2 plays, on 1 doesn't
+tap GLO
+wait 30
+expect page 4
+shot global.png
+turn K1 1
+expect synth_ch 1
+turn K2 1
+expect drum_ch 10
+midi 90 30 64
+wait 50
+expect note -1
+midi 91 30 64
+wait 50
+expect note 48
+midi 81 30 00
+midi 9A 24 64
+wait 50
+expect drum0 3
+midi 99 24 64
+wait 50
+expect drum0 3
+out
+key 2 down
+wait 30
+key 2 up
+wait 30
+expect_out USB 91 37 64
+# Bluetooth MIDI off from the page, on again
+turn K3 1
+expect ble_off 1
+expect ble 0
+turn K3 -1
+expect ble_off 0
+wait 1200
+expect ble 2
+turn K1 -1
+turn K2 -1
 # the settings across a reboot
 tap SAVE
 wait 30
@@ -119,19 +208,23 @@ reboot
 wait 600
 expect wave 0
 expect eg 1
-expect knob0 100
-expect knob3 64
+expect cutoff 100
+expect level 64
+expect lwave 3
+expect page 0
 # everything up at once stays under full scale
-turn K2 30
+tap ENV
+turn K2 127
 turn K3 127
+tap SEL
+turn K2 30
 turn K4 127
-turn SELECT 127
 peakreset
 wav loud.wav
 key 3 down
+tap ARP
 tap EDIT
-tap GLO
-tap HOME
+tap FX
 wait 800
 key 3 up
 wait 200

@@ -42,5 +42,11 @@ halfband; Decay/Gate/Attack EGs; BD/SN/HH. `tests/host/tribe_test.c` checks each
 writes WAVs); `app/tests/sound.txt` covers the panel and MIDI map. Constants marked GUESS in tribe.c (Gate/Attack,
 release ~12 ms, SN tone/noise balance) wait for the prototype comparison. Known gap: self-oscillation level rises
 ~2.5 dB from 80 Hz to 18 kHz; the recordings suggest it falls ~6 dB from 200 Hz to 3.5 kHz.
-Panel for now: K1–K4 CUTOFF/PEAK/NOISE/LEVEL, SELECT RHYTHM, PRESET wave, ALGO EG, EDIT/GLO/HOME the drums.
-Next: LFO (CC 1, 16, 81–83), then the sequencer, which takes over the drum buttons.
+UI: pages on buttons (app.c PAGE[]): a button shows its first page, pressed again its next; K1–K4 edit the page;
+the header's top right shows x/y (page of that button's pages). SEL VCO VCF (CUTOFF PEAK WAVE NOISE), ENV EG VCA
+(EG LEVEL RHYTHM), LFO 1/2 (RATE INT TARGET MODE) and 2/2 (WAVE), GLO GLOBAL (SYNTH CH, DRUM CH, BLE MIDI). Settings
+are PAR[] (knob 0..127 or switch), saved as "FMT4". SEQ is reserved for the step sequencer's pages, same pattern.
+Drum pads ARP/EDIT/FX (BD/SN/HH) until the sequencer. SELECT/ALGO/PRESET free (ALGO picks BLE devices while scanning).
+LFO (0.3): tribe.c, rates from the manual; depth (±1 oct pitch, ±3 oct cutoff), INT square-law taper, 1SHOT on the
+SLOW range and the falling saw are GUESSES.
+Next: the step sequencer on SEQ's pages (8 steps, parts SYNTH/BD/SN/HH, active steps, gate time, flux, tempo).

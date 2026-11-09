@@ -114,7 +114,7 @@ static double filter_gain(float cut01, float peak01, double hz)
 
 int main(int argc, char **argv)
 {
-    tribe_params_t p = {0.6f, 0.0f, 0.0f, 1.0f, 1.0f, TRIBE_SAW, TRIBE_DECAY};
+    tribe_params_t p = {.cutoff = 0.6f, .level = 1.0f, .rhythm = 1.0f, .wave = TRIBE_SAW, .eg = TRIBE_DECAY};
     int i, n;
     double f, g1, g2;
     wav_dir = argc > 1 ? argv[1] : 0;
@@ -247,22 +247,132 @@ int main(int argc, char **argv)
                     ;
                 CHECK(i < 120, "BD reaches half scale at %.1f ms (EST ~2 ms step)", i / 44.1);
             }
-            if (d == TRIBE_HH) {                 /* band levels: 1.25 kHz, 2.5 kHz, 10 kHz */
-                double b[3] = {0, 0, 0};
-                static const double C[3] = {1250, 2500, 10000};
+            if (d == TRIBE_HH) {                 /* band levels: 1.25, 2.5, 5, 10 kHz */
+                double b[4] = {0, 0, 0, 0};
+                static const double C[4] = {1250, 2500, 5000, 10000};
                 int k, j;
-                for (j = 0; j < 3; j++) {
+                for (j = 0; j < 4; j++) {
                     for (k = -15; k <= 15; k++)
                         b[j] += pow(goertzel(buf, 4096, C[j] * (1 + k * 0.012)), 2);
                     b[j] = 10 * log10(b[j] / 31);
                 }
                 CHECK(b[1] - b[0] > 8 && b[1] - b[0] < 15, "HH %.1f dB/oct below 2.5 kHz (EST ~11)", b[1] - b[0]);
-                CHECK(b[2] - b[1] < 9, "HH %.1f dB from 2.5 to 10 kHz (EST flat above ~5)", b[2] - b[1]);
+                CHECK(fabs(b[3] - b[2]) < 3, "HH %.1f dB from 5 to 10 kHz (EST flat above ~5)", b[3] - b[2]);
             }
         }
         printf("       RMS 0-100 ms: BD %.1f, SN %.1f, HH %.1f dBFS\n", r[0], r[1], r[2]);
         CHECK(fabs(r[0] - r[1] - 7) < 1.5, "SN %.1f dB under BD (EST 7)", r[0] - r[1]);
         CHECK(fabs(r[0] - r[2] - 21) < 1.5, "HH %.1f dB under BD (EST 21)", r[0] - r[2]);
+    }
+
+    printf("LFO (rates from the manual; depth and 1SHOT range are GUESSES)\n");
+    {
+        static const struct { int mode; float r; double lo, hi; } R[4] = {
+            {TRIBE_LFO_FAST, 0.0f, 0.99, 1.01}, {TRIBE_LFO_FAST, 1.0f, 4950, 5050},
+            {TRIBE_LFO_SLOW, 0.0f, 0.0495, 0.0505}, {TRIBE_LFO_SLOW, 1.0f, 17.8, 18.2}};
+        int j;
+        for (j = 0; j < 4; j++) {
+            double hz = tribe_lfo_hz(R[j].r, R[j].mode);
+            CHECK(hz > R[j].lo && hz < R[j].hi, "%s RATE %.0f: %.3f Hz", R[j].mode ? "SLOW" : "FAST", R[j].r, hz);
+        }
+        /* the LFO itself: a triangle at FAST, its period counted from its own output */
+        memset(&p, 0, sizeof p);
+        p.cutoff = 0.6f; p.level = 1.0f; p.eg = TRIBE_GATE; p.lfo_mode = TRIBE_LFO_FAST; p.lfo_wave = TRIBE_LFO_TRI;
+        p.lfo_rate = 0.5f;
+        reset(&p);
+        tribe_note_on(57.0f);
+        n = 44100;
+        for (i = 0; i < n; i += 64) {
+            tribe_render(buf + i, 64);
+            buf[NMAX - 1 - i / 64] = tribe_lfo_out();   /* (one reading a 64-sample block, from the top) */
+        }
+        {
+            float tmp[NMAX / 64];
+            for (i = 0; i < n / 64; i++)
+                tmp[i] = buf[NMAX - 1 - i];
+            f = freq_zc(tmp, n / 64) / 64;
+            CHECK(fabs(f / tribe_lfo_hz(0.5f, TRIBE_LFO_FAST) - 1) < 0.03, "FAST RATE 0.5: %.1f Hz (expected %.1f)", f,
+                  tribe_lfo_hz(0.5f, TRIBE_LFO_FAST));
+        }
+        /* INT full on VCO: the pitch swings an octave either way (a slow square: the two pitches) */
+        p.lfo_int = 1.0f; p.lfo_target = TRIBE_LFO_VCO; p.lfo_wave = TRIBE_LFO_SQR; p.lfo_mode = TRIBE_LFO_SLOW;
+        p.lfo_rate = 0.0f; p.cutoff = 0.9f;
+        reset(&p);
+        lfo_ph = 0.0f;
+        tribe_note_on(57.0f);
+        n = 44100;
+        render(buf, n);                          /* 0.05 Hz: the first 10 s are the square's top half */
+        f = freq_zc(buf + 4410, n - 4410);
+        CHECK(fabs(f / 440.0 - 1) < 0.01, "INT full, VCO, square up: %.1f Hz (A2 an octave up: 440)", f);
+        lfo_ph = 0.5f;
+        render(buf, n);
+        f = freq_zc(buf + 4410, n - 4410);
+        CHECK(fabs(f / 110.0 - 1) < 0.01, "square down: %.1f Hz (110)", f);
+        /* INT 0: nothing moves */
+        p.lfo_int = 0.0f;
+        reset(&p);
+        lfo_ph = 0.0f;
+        tribe_note_on(57.0f);
+        render(buf, n);
+        f = freq_zc(buf + 4410, n - 4410);
+        CHECK(fabs(f / 220.0 - 1) < 0.005, "INT 0: %.2f Hz (220)", f);
+        /* VCF target: the pitch stays, the cutoff moves (the level changes with the square) */
+        p.lfo_int = 1.0f; p.lfo_target = TRIBE_LFO_VCF; p.cutoff = 0.3f;
+        reset(&p);
+        lfo_ph = 0.0f;
+        tribe_note_on(45.0f);
+        render(buf, n);
+        f = freq_zc(buf + 4410, n - 4410);
+        g1 = rms(buf + 22050, 22050);
+        lfo_ph = 0.5f;
+        render(buf, n);
+        g2 = rms(buf + 22050, 22050);
+        CHECK(fabs(f / 110.0 - 1) < 0.01 && db(g1 / g2) > 6, "VCF: pitch %.1f Hz kept, cutoff up %.1f dB louder", f,
+              db(g1 / g2));
+        /* 1SHOT: one half-cycle from note on, then still; a new note plays it again */
+        p.lfo_mode = TRIBE_LFO_1SHOT; p.lfo_wave = TRIBE_LFO_SAW; p.lfo_rate = 1.0f; p.lfo_target = TRIBE_LFO_VCO;
+        reset(&p);
+        tribe_note_on(57.0f);
+        {
+            float first, mid, end;
+            tribe_render(buf, 1);
+            first = tribe_lfo_out();
+            render(buf, 22050 * 1 / 36 * 2 / 2);   /* a quarter of 18 Hz's cycle */
+            mid = tribe_lfo_out();
+            render(buf, 22050);
+            end = tribe_lfo_out();
+            CHECK(first > 0.95f && mid > 0.3f && mid < 0.7f && end == 0.0f,
+                  "1SHOT saw: %.2f at note on, %.2f a quarter-cycle on, %.2f after", first, mid, end);
+            tribe_note_on(57.0f);
+            tribe_render(buf, 1);
+            CHECK(tribe_lfo_out() > 0.95f, "1SHOT again at the next note: %.2f", tribe_lfo_out());
+        }
+        /* SLOW is free-running: a note doesn't restart it */
+        p.lfo_mode = TRIBE_LFO_SLOW; p.lfo_wave = TRIBE_LFO_TRI;
+        reset(&p);
+        lfo_ph = 0.3f;
+        tribe_note_on(57.0f);
+        tribe_render(buf, 1);
+        CHECK(lfo_ph > 0.29f, "SLOW: no key sync (phase %.2f kept)", lfo_ph);
+        /* an audio-rate LFO on the VCO renders: FAST full, INT full, sidebands, no NaN */
+        p.lfo_mode = TRIBE_LFO_FAST; p.lfo_rate = 0.8f; p.lfo_wave = TRIBE_LFO_SQR; p.cutoff = 0.8f; p.peak = 0.5f;
+        reset(&p);
+        tribe_note_on(48.0f);
+        render(buf, 44100);
+        {
+            float pk = 0;
+            for (i = 0; i < 44100; i++)
+                pk = (buf[i] == buf[i]) ? fmaxf(pk, fabsf(buf[i])) : 99.0f;
+            CHECK(pk > 0.05f && pk <= 1.0f, "FAST %.0f Hz on VCO and INT full: peak %.2f", tribe_lfo_hz(0.8f, 0), pk);
+        }
+        wav("lfo_fast.wav", buf, 44100);
+        /* a slow triangle wobbling the filter, to listen to */
+        p.lfo_mode = TRIBE_LFO_SLOW; p.lfo_rate = 0.55f; p.lfo_wave = TRIBE_LFO_TRI; p.lfo_target = TRIBE_LFO_VCF;
+        p.lfo_int = 0.8f; p.cutoff = 0.45f; p.peak = 0.7f;
+        reset(&p);
+        tribe_note_on(36.0f);
+        render(buf, 44100 * 3);
+        wav("lfo_wobble.wav", buf, 44100 * 3);
     }
 
     printf("Everything at once (the limiter)\n");

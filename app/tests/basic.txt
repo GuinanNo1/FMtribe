@@ -14,12 +14,12 @@ tap OCT+
 wait 30
 expect octave 1
 expect dirty 1
-turn PRESET 1
+turn K3 1
 wait 30
 expect wave 1
-turn K3 3
+turn PRESET 3
 wait 300
-expect turns5 3
+expect turns2 3
 press FX
 wait 30
 shot controls.png
@@ -42,10 +42,10 @@ expect peak_db_min -30
 midi 80 3C 00
 listen
 wait 100
-said FMTRIBE. OCTAVE +1. WAVE TRIANGLE. EG DECAY
-tap ARP
+said FMTRIBE. OCTAVE +1. VCO VCF 1/1. CUTOFF 80. PEAK 30. WAVE TRI. NOISE 0
+tap PLAY
 wait 30
-said BUTTON ARP
+said BUTTON PLAY
 # MASTER turned while a note plays: the gain glides, so no sample jumps further than the wave itself does
 midi 90 45 64
 wait 100

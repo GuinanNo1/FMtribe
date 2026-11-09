@@ -16,7 +16,7 @@
 #define SR2 (2.0f * TRIBE_SR)                   /* the VCO and filter run 2x oversampled */
 
 /* ------------------------------------------------------------ the settings --- */
-static tribe_params_t par = {0.6f, 0.3f, 0.0f, 0.8f, 0.7f, TRIBE_SAW, TRIBE_DECAY};
+static tribe_params_t par = {.cutoff = 0.6f, .peak = 0.3f, .level = 0.8f, .rhythm = 0.7f, .lfo_rate = 0.5f};
 static volatile uint32_t par_seq;               /* bumped by tribe_set: the render copies at a block's start */
 static tribe_params_t live;                     /* the render's copy */
 static uint32_t live_seq;
@@ -263,6 +263,69 @@ static inline float drums(void)
     return s;
 }
 
+/* ----------------------------------------------------------------- the LFO --- */
+/* From the manual (research doc, Synth voice): RATE over FAST ~1 Hz..5 kHz or SLOW ~0.05..18 Hz, exponential; INT.
+ * fully left none; TARGET VCO, VCO+VCF or VCF; 1SHOT plays the first half-cycle at note on, then stops; key sync
+ * restarts the phase at note on in FAST and 1SHOT; WAVE saw, triangle, square, and v2's sample and hold.
+ * GUESS (no measurements yet): 1SHOT runs at the SLOW range; depth at INT full is +-1 octave of pitch and +-3 octaves
+ * of cutoff; INT's taper is square-law (fine at the bottom); the saw falls. The waves, over a phase 0..1:
+ *   saw 1 - 2p (falling), triangle 0 -> 1 -> -1 -> 0, square +1 then -1, S&H a new random level each cycle.
+ * In 1SHOT the half-cycle ends at 0 for saw and triangle (no modulation after), and the square's after it too. */
+#define LFO_FAST_LO 1.0f
+#define LFO_FAST_HI 5000.0f
+#define LFO_SLOW_LO 0.05f
+#define LFO_SLOW_HI 18.0f
+#define LFO_PITCH_SEMI 12.0f
+#define LFO_CUT_OCT 3.0f
+static float lfo_ph, lfo_sh, lfo_now;
+static uint8_t lfo_done;                        /* 1SHOT: the half-cycle played */
+
+float tribe_lfo_hz(float r, int mode)
+{
+    r = fm_clampf(r, 0.0f, 1.0f);
+    if (mode == TRIBE_LFO_FAST)
+        return LFO_FAST_LO * fm_exp2f(r * 12.2877124f);     /* log2(5000 / 1) */
+    return LFO_SLOW_LO * fm_exp2f(r * 8.4918531f);          /* log2(18 / 0.05) */
+}
+float tribe_lfo_out(void) { return lfo_now; }
+
+static inline float lfo_wave(uint8_t w, float p)
+{
+    if (w == TRIBE_LFO_SAW)
+        return 1.0f - 2.0f * p;
+    if (w == TRIBE_LFO_TRI)
+        return p < 0.25f ? 4.0f * p : p < 0.75f ? 2.0f - 4.0f * p : 4.0f * p - 4.0f;
+    if (w == TRIBE_LFO_SQR)
+        return p < 0.5f ? 1.0f : -1.0f;
+    return lfo_sh;
+}
+
+static inline float lfo_step(float inc, uint8_t w, uint8_t mode)   /* one sample, -1..1 */
+{
+    float v;
+    if (mode == TRIBE_LFO_1SHOT && lfo_done)
+        return lfo_now = (w == TRIBE_LFO_SH ? lfo_sh : 0.0f);
+    v = lfo_wave(w, lfo_ph);
+    lfo_ph += inc;
+    if (mode == TRIBE_LFO_1SHOT && lfo_ph >= 0.5f)
+        lfo_done = 1;
+    if (lfo_ph >= 1.0f) {
+        lfo_ph -= (float)(int32_t)lfo_ph;
+        lfo_sh = white();
+    }
+    return lfo_now = v;
+}
+
+static void lfo_sync(uint8_t mode, uint8_t w)   /* note on */
+{
+    if (mode == TRIBE_LFO_SLOW)
+        return;
+    lfo_ph = 0.0f;
+    lfo_done = 0;
+    if (w == TRIBE_LFO_SH)
+        lfo_sh = white();
+}
+
 /* ------------------------------------------------------------- the render --- */
 static float dc_x, dc_y;                        /* the output's DC block (~5 Hz) */
 
@@ -278,16 +341,19 @@ static inline float soft_limit(float x)         /* linear to 0.8, then a tanh kn
 void tribe_render(float *out, uint32_t n)
 {
     uint32_t i, ev;
-    float cut_t, peak_t, k_sm, lvl, rhy, nz;
+    float cut_t, peak_t, k_sm, lvl, rhy, nz, lfo_inc, amt, pdep, cdep, pitch, dt0;
     k35_t c;
     if (live_seq != par_seq) {
         live_seq = par_seq;
+        if (par.lfo_mode != live.lfo_mode)
+            lfo_done = 1;                       /* (switching into 1SHOT waits for a note) */
         live = par;
     }
     if (ev_on) {                                /* note on: the EG from the top (and the VCO's phase kept) */
         ev_on = 0;
         eg_gate = 1;
         eg_e = 1.0f;
+        lfo_sync(live.lfo_mode, live.lfo_wave);
     }
     if (ev_off) {
         ev_off = 0;
@@ -305,9 +371,12 @@ void tribe_render(float *out, uint32_t n)
         if (ev & 1u << TRIBE_HH)
             hh_amp = 1.0f;
     }
-    vco_dt = 440.0f * fm_exp2f((note_pitch - 69.0f) * (1.0f / 12.0f)) / SR2;
-    if (vco_dt > 0.45f)
-        vco_dt = 0.45f;
+    pitch = note_pitch;
+    dt0 = 440.0f * fm_exp2f((pitch - 69.0f) * (1.0f / 12.0f)) / SR2;
+    lfo_inc = tribe_lfo_hz(live.lfo_rate, live.lfo_mode) * (1.0f / SR);
+    amt = live.lfo_int * live.lfo_int;
+    pdep = live.lfo_target != TRIBE_LFO_VCF ? amt * LFO_PITCH_SEMI : 0.0f;
+    cdep = live.lfo_target != TRIBE_LFO_VCO ? amt * LFO_CUT_OCT / CUT_OCT : 0.0f;   /* in CUTOFF's 0..1 units */
     cut_t = live.cutoff;
     peak_t = live.peak;
     lvl = live.level * 0.9f;
@@ -315,10 +384,14 @@ void tribe_render(float *out, uint32_t n)
     nz = live.noise;
     k_sm = 1.0f - fm_expf(-1.0f / (0.005f * SR));
     for (i = 0; i < n; i++) {
-        float s, x;
+        float s, x, l = lfo_step(lfo_inc, live.lfo_wave, live.lfo_mode);
         cut_s += (cut_t - cut_s) * k_sm;
         peak_s += (peak_t - peak_s) * k_sm;
-        k35_coef(&c, tribe_cutoff_hz(cut_s), fm_maxf(0.01f, K_MAX * peak_s));
+        vco_dt = pdep != 0.0f ? dt0 * fm_exp2f(l * pdep * (1.0f / 12.0f)) : dt0;
+        if (vco_dt > 0.45f)
+            vco_dt = 0.45f;
+        x = cut_s + l * cdep;                   /* CUTOFF's exponential taper carries on past its ends */
+        k35_coef(&c, CUT_LO * fm_exp2f(fm_clampf(x, -0.5f, 1.2f) * CUT_OCT), fm_maxf(0.01f, K_MAX * peak_s));
         x = 0.55f * (vco(live.wave) + nz * white());
         hb_push(k35(&c, x));
         x = 0.55f * (vco(live.wave) + nz * white());
@@ -345,6 +418,12 @@ void tribe_set(const tribe_params_t *p)
         par.wave = TRIBE_SAW;
     if (par.eg >= TRIBE_NEG)
         par.eg = TRIBE_DECAY;
+    if (par.lfo_target >= TRIBE_NTARGET)
+        par.lfo_target = TRIBE_LFO_VCO;
+    if (par.lfo_mode >= TRIBE_NMODE)
+        par.lfo_mode = TRIBE_LFO_FAST;
+    if (par.lfo_wave >= TRIBE_NLWAVE)
+        par.lfo_wave = TRIBE_LFO_TRI;
     par_seq++;
 }
 
@@ -388,6 +467,8 @@ void tribe_init(void)
     hh_r = 1.41421356f;                         /* the SVF's 2R: Q 0.707 */
     cut_s = par.cutoff;
     peak_s = par.peak;
+    lfo_done = 1;
+    lfo_sh = 0.0f;
     live = par;
     live_seq = par_seq;
 }

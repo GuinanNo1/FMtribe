@@ -1,7 +1,7 @@
 # Quickstart
 
-Get FMtribe onto your FM-1 and making sound in five minutes. This build has the synth voice and the drums; the
-LFO and the sequencer arrive in later versions.
+Get FMtribe onto your FM-1 and making sound in five minutes. This build has the synth voice, the LFO and the drums;
+the sequencer arrives next.
 
 ---
 
@@ -21,14 +21,21 @@ To go back to M-VAVE's firmware, or to another one, open the same installer and 
 
 ## 3. Play
 
+Press a page button, then turn K1 to K4 to edit that page. Press the button again for its next page; the top right of
+the screen shows which one, such as 1/2.
+
+| Page (button) | K1 | K2 | K3 | K4 |
+| --- | --- | --- | --- | --- |
+| VCO VCF (SEL) | CUTOFF | PEAK | WAVE | NOISE |
+| EG VCA (ENV) | EG | LEVEL | RHYTHM | |
+| LFO 1/2 (LFO) | RATE | INT | TARGET | MODE |
+| LFO 2/2 (LFO) | WAVE | | | |
+| GLOBAL (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
+
 | Do this | And |
 | --- | --- |
 | Play the keys | The synth sounds. Each new key starts its envelope again. |
-| Turn K1 to K4 | CUTOFF, PEAK, NOISE, LEVEL. PEAK near the top makes the filter whistle. |
-| Turn SELECT | RHYTHM: the drums' volume. |
-| Turn PRESET | Saw, triangle or square. |
-| Turn ALGORITHM | The envelope: DECAY, GATE or ATTACK. |
-| EDIT · GLO · HOME | Bass drum, snare, hi-hat. |
+| ARP · EDIT · FX | Bass drum, snare, hi-hat. |
 | OCT− · OCT+ | Octave down or up. |
 | Turn MASTER | Volume. |
 | SAVE | Keeps your settings for the next start (it lights when there's something to save). |
@@ -45,7 +52,7 @@ To go back to M-VAVE's firmware, or to another one, open the same installer and 
 
 ## 5. If something goes wrong
 
-- **No sound:** turn MASTER, LEVEL and CUTOFF up. A DECAY note fades after about a second; choose GATE with ALGORITHM for held notes.
+- **No sound:** turn MASTER up, LEVEL (ENV page) and CUTOFF (SEL page). A DECAY note fades after about a second; set EG to GATE on the ENV page for held notes.
 - **The installer can't find the FM-1:** close other programs using its MIDI port, try another cable (some are
   charge-only), and allow MIDI in the browser.
 - **The FM-1 doesn't start after an install:** after two failed starts it opens in SAFE MODE, where the installer

@@ -1,9 +1,9 @@
 # FMtribe
 
 FMtribe will recreate the sound and controls of a classic monophonic analogue groove box on the M-VAVE FM-1. This
-build has the synth voice and the drums: one oscillator (saw, triangle or square) and noise into a two-pole
-MS-style low-pass filter that self-oscillates, a VCA with three fixed envelopes, and a bass drum, snare and hi-hat.
-The LFO, the sequencer and the ribbon modes come next. The sound is fitted to recordings of real units, so treat
+build has the synth voice, the LFO and the drums: one oscillator (saw, triangle or square) and noise into a
+two-pole MS-style low-pass filter that self-oscillates, a VCA with three fixed envelopes, an LFO on the pitch, the
+filter or both, and a bass drum, snare and hi-hat. The sequencer and the ribbon modes come next. The sound is fitted to recordings of real units, so treat
 it as an estimate until it has been compared side by side with one.
 
 ![The FMtribe screen at rest](img/screen-ready.png "FMtribe at rest")
@@ -40,13 +40,13 @@ can recover an FM-1 that doesn't start, too. For details, see felucca-bsp's `too
 
 ## 2. The screen
 
-![FMtribe while it plays: the five knobs as bars, SAW and ATTACK lit, the HH pad lit](img/screen-playing.png "Playing: the Attack envelope, the hi-hat just hit")
+![The LFO's first page: RATE and INT as bars, TARGET VCO and MODE SLOW, 1/2 at the top right](img/screen-playing.png "The LFO's first page")
 
 | Part | What it shows |
 | --- | --- |
-| Header | The name, and BLE, which lights while a computer or tablet is connected over Bluetooth. While you play a key, it shows the note. After a change, a message shows here for a moment, such as CUTOFF 100. |
-| Knobs | CUTOFF, PEAK, NOISE, LEVEL and RHYTHM, each a bar and a value from 0 to 127, with the encoder that turns it underneath. A knob lights for a moment as you turn it. |
-| WAVE and EG | The oscillator's wave and the envelope, with the one in use lit. |
+| Header | The name, and BLE, which lights while a computer or tablet is connected over Bluetooth. While you play a key, it shows the note. After a change, a message shows here for a moment, such as CUTOFF 100. At the top right, which page of its button you're on, such as 1/2. |
+| Tabs | The pages' buttons: VCO VCF (SEL), EG VCA (ENV), LFO (LFO) and GLOBAL (GLO). The one you're on is lit, and so is its button. |
+| K1 to K4 | What the four knobs do on this page. A knob shows a bar and a value from 0 to 127; a switch shows its position. Each lights for a moment as you turn it. |
 | Drums | The BD, SN and HH pads, with the button that plays each. A pad lights as its drum plays. |
 | Keys | The 27 keys, black above white. A held key fills up. |
 | Bottom line | The octave, the last MIDI message in, and the volume (MASTER). |
@@ -55,49 +55,76 @@ can recover an FM-1 that doesn't start, too. For details, see felucca-bsp's `too
 
 ## 3. Controls
 
-| Control | What it does |
+The four knobs K1 to K4 edit the page on the screen. A page's button shows it; press the button again for its next
+page, if it has more than one. A switch moves one position for each click of the knob.
+
+| Page (button) | K1 | K2 | K3 | K4 |
+| --- | --- | --- | --- | --- |
+| VCO VCF (SEL) | CUTOFF | PEAK | WAVE | NOISE |
+| EG VCA (ENV) | EG | LEVEL | RHYTHM | |
+| LFO 1/2 (LFO) | RATE | INT | TARGET | MODE |
+| LFO 2/2 (LFO) | WAVE | | | |
+| GLOBAL (GLO) | SYNTH CH | DRUM CH | BLE MIDI | |
+
+| Setting | What it does |
 | --- | --- |
-| Keys | Play the synth. The last key you pressed sounds, and each new key starts the envelope again, as the monotribe's ribbon does. Let go of it while holding another, and the pitch goes back to the one still held. The volume doesn't follow how hard you play, as on the monotribe. Each key also sends its note over USB and Bluetooth, on channel 1. |
-| K1 · CUTOFF | The filter's cutoff, from about 80 Hz to about 18 kHz. |
-| K2 · PEAK | The filter's resonance. Near the top, the filter whistles on its own at the cutoff while a note plays. |
-| K3 · NOISE | White noise beside the oscillator, into the filter. |
-| K4 · LEVEL | The synth's volume. |
-| SELECT · RHYTHM | The drums' volume. |
-| PRESET · WAVE | Saw, triangle or square. |
-| ALGORITHM · EG | The envelope. DECAY jumps to full when a note starts and dies away over about 1.3 seconds, even while you hold the key. GATE stays full while you hold it. ATTACK rises over about 1.3 seconds while you hold it. All three close quickly when you let go. |
-| EDIT · GLO · HOME | Play the bass drum, snare and hi-hat, and send them out on channel 10. They stand in for the sequencer until it arrives. |
+| CUTOFF | The filter's cutoff, from about 80 Hz to about 18 kHz. |
+| PEAK | The filter's resonance. Near the top, the filter whistles on its own at the cutoff while a note plays. |
+| WAVE | The oscillator: saw, triangle or square. |
+| NOISE | White noise beside the oscillator, into the filter. |
+| EG | The envelope. DECAY jumps to full when a note starts and dies away over about 1.3 seconds, even while you hold the key. GATE stays full while you hold it. ATTACK rises over about 1.3 seconds while you hold it. All three close quickly when you let go. |
+| LEVEL | The synth's volume. |
+| RHYTHM | The drums' volume. |
+| RATE | The LFO's speed: about 1 Hz to 5 kHz in FAST, 0.05 Hz to 18 Hz in SLOW and 1 SHOT. |
+| INT | How much the LFO moves the pitch or the filter, from none at 0. At the top, the pitch swings an octave either way and the cutoff three octaves. |
+| TARGET | What the LFO moves: VCO (the pitch), VCO+VCF (both) or VCF (the cutoff). |
+| MODE | FAST and SLOW run all the time. FAST and 1 SHOT start again with each new note. 1 SHOT plays half a cycle when a note starts and then stops, like a second envelope. |
+| WAVE (LFO) | Saw (falling), triangle, square, or S&H, a new random level each cycle. |
+| SYNTH CH | The MIDI channel the synth plays on and the keys send on, 1 to 16 (1 at first). |
+| DRUM CH | The MIDI channel the drums play on and send on, 1 to 16 (10 at first). |
+| BLE MIDI | Bluetooth MIDI on or off. Holding REC for a second does the same. |
+
+| Button | What it does |
+| --- | --- |
+| Keys | Play the synth. The last key you pressed sounds, and each new key starts the envelope again, as the monotribe's ribbon does. Let go of it while holding another, and the pitch goes back to the one still held. The volume doesn't follow how hard you play, as on the monotribe. Each key also sends its note on the synth's channel. |
+| ARP · EDIT · FX | Play the bass drum, snare and hi-hat, and send them on the drums' channel. They stand in for the sequencer until it arrives. |
 | OCT− · OCT+ | Set the octave, in six steps from −3 to +2, as the monotribe's six octave positions. |
 | MASTER | Sets the volume. |
-| SAVE | Saves the knobs, the wave, the envelope, the octave and whether Bluetooth is on or off. SAVE lights while there's something to save. |
+| SAVE | Saves every setting and the octave. SAVE lights while there's something to save. |
 | REC | Press it to find and connect a Bluetooth MIDI device. Hold it for a second to switch Bluetooth off or on. For details, see MIDI and audio. |
-| FX, SEL, ENV, LFO, ARP, SEQ, PLAY | Show their names, and do nothing else yet. The LFO and the sequencer will use them. |
+| SEQ · PLAY · HOME | Show their names, and do nothing else yet. SEQ will hold the step sequencer's pages. |
 
 ---
 
 ## 4. Saving
 
-Press SAVE to keep the knobs, the wave, the envelope, the octave and whether Bluetooth is on. They come back the
-next time the FM-1 starts. SAVE stays lit while there are changes to save. Settings saved by FMtribe 0.1 don't
-carry over, since this version keeps more of them.
+Press SAVE to keep every setting, the octave and whether Bluetooth is on. They come back the
+next time the FM-1 starts. SAVE stays lit while there are changes to save. Settings saved by an earlier FMtribe
+don't carry over, since this version keeps more of them.
 
-![After turning CUTOFF, PEAK and RHYTHM and switching the envelope to GATE](img/screen-settings.png "Knobs turned, not saved yet")
+![The GLOBAL page: SYNTH CH 1, DRUM CH 10, BLE MIDI ON](img/screen-settings.png "The GLOBAL page")
 
 ---
 
 ## 5. MIDI and audio
 
-MIDI comes in over USB, Bluetooth and the TRS jack, on the monotribe's own map:
+MIDI comes in over USB, Bluetooth and the TRS jack, on the monotribe's own map. The channels are set on the GLOBAL
+page; at first the synth is on 1 and the drums on 10.
 
 | Message | What it does |
 | --- | --- |
-| Notes on channel 1 | Play the synth. Velocity is ignored. |
-| Pitch bend on channel 1 | Bends the synth up to 2 semitones either way. |
-| Notes 36, 40, 42 on channel 10 | Play the bass drum, snare and hi-hat. |
-| CC 80 on channel 1 | The envelope: about 32 for DECAY, 64 for GATE, 96 for ATTACK. |
-| CC 7 on channel 1 | LEVEL. |
+| Notes on the synth's channel | Play the synth. Velocity is ignored. |
+| Pitch bend on the synth's channel | Bends the synth up to 2 semitones either way. |
+| Notes 36, 40, 42 on the drums' channel | Play the bass drum, snare and hi-hat. |
+| CC 1 · CC 16 | LFO INT · LFO RATE. |
+| CC 80 | EG: about 32 DECAY, 64 GATE, 96 ATTACK. |
+| CC 81 | LFO TARGET: 32 VCO, 64 VCO+VCF, 96 VCF. |
+| CC 82 | LFO MODE: 32 FAST, 64 SLOW, 96 1 SHOT. |
+| CC 83 | LFO WAVE: 32 saw, 64 triangle, 96 square, 127 S&H. |
+| CC 7 | LEVEL. |
 
-The monotribe's LFO controllers (CC 1, 16, 81 to 83) arrive with the LFO. The keys send notes, with their velocity
-and poly aftertouch, out over USB and Bluetooth on channel 1, and the drum buttons send theirs on channel 10.
+The CCs are read on the synth's channel. The keys send notes, with their velocity and poly aftertouch, out over USB
+and Bluetooth on the synth's channel, and the drum buttons send theirs on the drums' channel.
 
 Over Bluetooth, FMtribe shows up as "FM-1". On a Mac, open Audio MIDI Setup, choose Window > Show MIDI Studio,
 click the Bluetooth button, then click Connect next to FM-1. On an iPad or iPhone, connect from a music app's
@@ -141,8 +168,9 @@ reader or with its built-in voice.
 ## 8. Troubleshooting
 
 If you hear no sound, turn MASTER and LEVEL up, and CUTOFF too: with CUTOFF low and PEAK low, the filter lets
-little through. With the DECAY envelope, a note dies away after about a second even while you hold the key; choose
-GATE with ALGORITHM for a note that lasts. For the drums, turn RHYTHM up.
+little through. With the DECAY envelope, a note dies away after about a second even while you hold the key; on the
+EG VCA page (ENV), set EG to GATE for a note that lasts. For the drums, turn RHYTHM up on the same page. If the
+pitch wobbles, turn INT down on the LFO page.
 
 If the installer doesn't find the FM-1, use Chrome or Edge, and allow MIDI when the browser asks. Close any other
 programs that use the FM-1's MIDI port.

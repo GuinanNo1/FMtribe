@@ -14,6 +14,9 @@
 enum { TRIBE_SAW, TRIBE_TRI, TRIBE_SQR, TRIBE_NWAVE };          /* VCO WAVE */
 enum { TRIBE_DECAY, TRIBE_GATE, TRIBE_ATTACK, TRIBE_NEG };       /* EG (the VCA's) */
 enum { TRIBE_BD, TRIBE_SN, TRIBE_HH, TRIBE_NDRUM };
+enum { TRIBE_LFO_VCO, TRIBE_LFO_BOTH, TRIBE_LFO_VCF, TRIBE_NTARGET };   /* LFO TARGET: VCO, VCO+VCF, VCF */
+enum { TRIBE_LFO_FAST, TRIBE_LFO_SLOW, TRIBE_LFO_1SHOT, TRIBE_NMODE };  /* LFO MODE */
+enum { TRIBE_LFO_SAW, TRIBE_LFO_TRI, TRIBE_LFO_SQR, TRIBE_LFO_SH, TRIBE_NLWAVE };   /* LFO WAVE (S&H: v2) */
 
 typedef struct {
     float cutoff;      /* 0..1: CUTOFF, exponential, ~80 Hz .. ~16 kHz */
@@ -21,8 +24,13 @@ typedef struct {
     float noise;       /* 0..1: NOISE, white noise beside the VCO into the filter */
     float level;       /* 0..1: the synth's LEVEL */
     float rhythm;      /* 0..1: RHYTHM, the drums' shared level */
+    float lfo_rate;    /* 0..1: RATE, exponential over the MODE's range (FAST 1 Hz..5 kHz, SLOW and 1SHOT 0.05..18 Hz) */
+    float lfo_int;     /* 0..1: INT., 0 none */
     uint8_t wave;      /* TRIBE_SAW .. */
     uint8_t eg;        /* TRIBE_DECAY .. */
+    uint8_t lfo_target;   /* TRIBE_LFO_VCO .. */
+    uint8_t lfo_mode;     /* TRIBE_LFO_FAST .. */
+    uint8_t lfo_wave;     /* TRIBE_LFO_SAW .. */
 } tribe_params_t;
 
 void tribe_init(void);
@@ -36,6 +44,9 @@ void tribe_panic(void);                         /* silence now */
 /* n mono samples, about -1..1 (soft-limited), into out */
 void tribe_render(float *out, uint32_t n);
 
-/* for the host tests: the filter's cutoff in Hz and the EG level now */
+/* for the host tests and the screen: the filter's cutoff in Hz, the EG level now, the LFO's rate in Hz for a RATE
+ * and MODE, and its output now (-1..1, before INT) */
 float tribe_cutoff_hz(float cutoff01);
 float tribe_eg_level(void);
+float tribe_lfo_hz(float rate01, int mode);
+float tribe_lfo_out(void);

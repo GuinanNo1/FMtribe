@@ -8,47 +8,101 @@
 #include "fastmath.h"
 #include "tribe.h"
 
-#define SET_MAGIC 0x32544D46u            /* "FMT2": the settings record; another magic loads defaults */
+/* ------------------------------------------------------------- the settings --- */
+/* every setting the panel edits, by number: a knob's 0..127, or a switch's position (its OPT names) */
+enum { P_CUTOFF, P_PEAK, P_WAVE, P_NOISE, P_EG, P_LEVEL, P_RHYTHM, P_LRATE, P_LINT, P_LTARGET, P_LMODE, P_LWAVE,
+       P_SYNTH_CH, P_DRUM_CH, P_BLE, NP };
+typedef struct {
+    const char *name;
+    uint8_t nopt;                        /* 0: a knob, 0..127; else a switch with this many positions */
+    const char *const *opt;              /* a switch's positions, as the screen shows them */
+    uint8_t def;
+} param_t;
+static const char *const WAVE_OPT[TRIBE_NWAVE] = {"SAW", "TRI", "SQUARE"};
+static const char *const EG_OPT[TRIBE_NEG] = {"DECAY", "GATE", "ATTACK"};
+static const char *const TARGET_OPT[TRIBE_NTARGET] = {"VCO", "VCO+VCF", "VCF"};
+static const char *const MODE_OPT[TRIBE_NMODE] = {"FAST", "SLOW", "1 SHOT"};
+static const char *const LWAVE_OPT[TRIBE_NLWAVE] = {"SAW", "TRI", "SQUARE", "S&H"};
+static const char *const CH_OPT[16] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14",
+                                       "15", "16"};
+static const char *const BLE_OPT[2] = {"ON", "OFF"};   /* (stored as "off", so 0, the default, is on) */
+static const param_t PAR[NP] = {
+    {"CUTOFF", 0, 0, 80},
+    {"PEAK", 0, 0, 30},
+    {"WAVE", TRIBE_NWAVE, WAVE_OPT, TRIBE_SAW},
+    {"NOISE", 0, 0, 0},
+    {"EG", TRIBE_NEG, EG_OPT, TRIBE_DECAY},
+    {"LEVEL", 0, 0, 100},
+    {"RHYTHM", 0, 0, 90},
+    {"RATE", 0, 0, 64},
+    {"INT", 0, 0, 0},
+    {"TARGET", TRIBE_NTARGET, TARGET_OPT, TRIBE_LFO_VCO},
+    {"MODE", TRIBE_NMODE, MODE_OPT, TRIBE_LFO_SLOW},
+    {"WAVE", TRIBE_NLWAVE, LWAVE_OPT, TRIBE_LFO_TRI},
+    {"SYNTH CH", 16, CH_OPT, 0},        /* the MIDI channels: the synth's (in and out), the drums' */
+    {"DRUM CH", 16, CH_OPT, 9},
+    {"BLE MIDI", 2, BLE_OPT, 0},         /* Bluetooth MIDI on or off (REC held, too) */
+};
+
+/* the pages: a button shows its page and K1..K4 edit it; pressed again, its next page (LFO has two) */
+typedef struct {
+    const char *name;                    /* on the tab */
+    uint8_t button;                      /* plat.h B_* */
+    int8_t p[4];                         /* the settings on K1..K4 (-1: none) */
+} page_t;
+enum { PG_VCF, PG_VCA, PG_LFO1, PG_LFO2, PG_GLOBAL, NPG };   /* (SEQ: the step sequencer's pages, next) */
+static const page_t PAGE[NPG] = {
+    {"VCO VCF", B_SEL, {P_CUTOFF, P_PEAK, P_WAVE, P_NOISE}},
+    {"EG VCA", B_ENV, {P_EG, P_LEVEL, P_RHYTHM, -1}},
+    {"LFO", B_LFO, {P_LRATE, P_LINT, P_LTARGET, P_LMODE}},
+    {"LFO", B_LFO, {P_LWAVE, -1, -1, -1}},
+    {"GLOBAL", B_GLO, {P_SYNTH_CH, P_DRUM_CH, P_BLE, -1}},
+};
+
+#define SET_MAGIC 0x34544D46u            /* "FMT4": the settings record; another magic loads defaults */
 typedef struct {
     uint32_t magic;
     int8_t octave;                       /* -3 .. +2: six positions, as the monotribe's 64' .. 2' */
-    uint8_t wave;                        /* VCO WAVE: TRIBE_SAW, TRIBE_TRI, TRIBE_SQR */
-    uint8_t ble_off;                     /* Bluetooth switched off (REC held); 0, the default: on */
-    uint8_t eg;                          /* EG: TRIBE_DECAY, TRIBE_GATE, TRIBE_ATTACK */
-    uint8_t knob[5];                     /* 0..127: CUTOFF, PEAK, NOISE, LEVEL, RHYTHM */
-    uint8_t rsv[3];
+    uint8_t v[NP];                       /* the settings above */
 } settings_t;
 static settings_t set;
 static uint8_t set_dirty;                /* changed since the last save: SAVE is lit */
 
-enum { KN_CUTOFF, KN_PEAK, KN_NOISE, KN_LEVEL, KN_RHYTHM, NKN };
-static const char *const KNOB_NAME[NKN] = {"CUTOFF", "PEAK", "NOISE", "LEVEL", "RHYTHM"};
-static const uint8_t KNOB_DEF[NKN] = {80, 30, 0, 100, 90};
-static const char *const WAVE_NAME[TRIBE_NWAVE] = {"SAW", "TRIANGLE", "SQUARE"};
-static const char *const EG_NAME[TRIBE_NEG] = {"DECAY", "GATE", "ATTACK"};
 static const char *const DRUM_NAME[TRIBE_NDRUM] = {"BD", "SN", "HH"};
 static const uint8_t DRUM_NOTE[TRIBE_NDRUM] = {36, 40, 42};   /* channel 10, the monotribe's (GM) */
 /* the controls by their names in plat.h, in its order */
 static const char *const BTN_NAME[NB] = {"FX", "SEL", "ENV", "LFO", "EDIT", "GLO", "HOME", "SAVE", "ARP", "SEQ",
                                          "PLAY", "REC", "OCT-", "OCT+"};
-static const char *const ENC_NAME[NE] = {"SELECT", "ALGO", "PRESET", "K1", "K2", "K3", "K4"};
-/* the panel for now (no sequencer yet): K1..K4 CUTOFF, PEAK, NOISE, LEVEL; SELECT RHYTHM; ALGO the EG; PRESET the
- * VCO's wave; EDIT, GLO, HOME play BD, SN, HH */
-static const int8_t ENC_KNOB[NE] = {KN_RHYTHM, -1, -1, KN_CUTOFF, KN_PEAK, KN_NOISE, KN_LEVEL};
-static int drum_button(uint32_t k) { return k == B_EDIT ? TRIBE_BD : k == B_GLO ? TRIBE_SN : k == B_HOME ? TRIBE_HH : -1; }
+/* until the sequencer arrives, the left column plays the drums: ARP BD, EDIT SN, FX HH */
+static const uint8_t DRUM_BTN[TRIBE_NDRUM] = {B_ARP, B_EDIT, B_FX};
+static int drum_button(uint32_t k)
+{
+    int d;
+    for (d = 0; d < TRIBE_NDRUM; d++)
+        if (k == DRUM_BTN[d])
+            return d;
+    return -1;
+}
 
 static void engine_update(void)          /* the settings to the engine */
 {
     tribe_params_t p;
-    p.cutoff = set.knob[KN_CUTOFF] / 127.0f;
-    p.peak = set.knob[KN_PEAK] / 127.0f;
-    p.noise = set.knob[KN_NOISE] / 127.0f;
-    p.level = set.knob[KN_LEVEL] / 127.0f;
-    p.rhythm = set.knob[KN_RHYTHM] / 127.0f;
-    p.wave = set.wave;
-    p.eg = set.eg;
+    p.cutoff = set.v[P_CUTOFF] / 127.0f;
+    p.peak = set.v[P_PEAK] / 127.0f;
+    p.noise = set.v[P_NOISE] / 127.0f;
+    p.level = set.v[P_LEVEL] / 127.0f;
+    p.rhythm = set.v[P_RHYTHM] / 127.0f;
+    p.lfo_rate = set.v[P_LRATE] / 127.0f;
+    p.lfo_int = set.v[P_LINT] / 127.0f;
+    p.wave = set.v[P_WAVE];
+    p.eg = set.v[P_EG];
+    p.lfo_target = set.v[P_LTARGET];
+    p.lfo_mode = set.v[P_LMODE];
+    p.lfo_wave = set.v[P_LWAVE];
     tribe_set(&p);
 }
+
+static void param_text(int p, char *t);  /* (UI) */
 
 /* ------------------------------------------------------------------ voice --- */
 /* one voice: the keys keep a short stack (the newest sounds; let go, the one before it, without a new attack); MIDI in
@@ -126,12 +180,12 @@ static void midi_in(void)                    /* audio interrupt: the packets tha
             midi_last_port = (uint32_t)port;
             midi_count++;
         }
-        if (ch == 9u) {                      /* channel 10: the drums */
+        if (ch == set.v[P_DRUM_CH]) {        /* the drums' channel (10) */
             if (ty == 0x90u && d2)
                 for (d = 0; d < TRIBE_NDRUM; d++)
                     if (d1 == DRUM_NOTE[d])
                         drum(d);
-        } else if (ch == 0u) {               /* channel 1: the synth */
+        } else if (ch == set.v[P_SYNTH_CH]) {   /* the synth's channel (1) */
             if (ty == 0x90u && d2)
                 note_on((int32_t)d1, d2);
             else if (ty == 0x80u || ty == 0x90u)
@@ -140,12 +194,14 @@ static void midi_in(void)                    /* audio interrupt: the packets tha
                 bend_q = (int32_t)(d1 | (d2 << 7)) - 8192;
                 if (voice_note >= 0)
                     tribe_note_glide(note_pitch(voice_note));
-            } else if (ty == 0xB0u && d1 == 80u) {   /* EG shape: 32 decay, 64 gate, 96 attack */
-                set.eg = d2 < 48u ? TRIBE_DECAY : d2 < 80u ? TRIBE_GATE : TRIBE_ATTACK;
-                midi_knobs++;
-            } else if (ty == 0xB0u && d1 == 7u) {    /* volume: LEVEL */
-                set.knob[KN_LEVEL] = (uint8_t)d2;
-                midi_knobs++;
+            } else if (ty == 0xB0u) {        /* the monotribe's controllers; a switch: 32, 64, 96 (127: S&H) */
+                uint8_t sw = (uint8_t)(d2 < 48u ? 0 : d2 < 80u ? 1 : d2 < 112u ? 2 : 3);
+                int pn = d1 == 1u ? P_LINT : d1 == 16u ? P_LRATE : d1 == 7u ? P_LEVEL : d1 == 80u ? P_EG :
+                         d1 == 81u ? P_LTARGET : d1 == 82u ? P_LMODE : d1 == 83u ? P_LWAVE : -1;
+                if (pn >= 0) {
+                    set.v[pn] = PAR[pn].nopt ? (sw < PAR[pn].nopt ? sw : (uint8_t)(PAR[pn].nopt - 1)) : (uint8_t)d2;
+                    midi_knobs++;
+                }
             }
         }
     }
@@ -181,21 +237,18 @@ static void settings_defaults(void)
     uint32_t i;
     set.magic = SET_MAGIC;
     set.octave = 0;
-    set.wave = TRIBE_SAW;
-    set.eg = TRIBE_DECAY;
-    set.ble_off = 0;
-    for (i = 0; i < NKN; i++)
-        set.knob[i] = KNOB_DEF[i];
+    for (i = 0; i < NP; i++)
+        set.v[i] = PAR[i].def;
 }
 
 void app_init(void)
 {
     uint32_t i, bad = 0;
     if (plat_store_load(OBJ_SETTINGS, &set, sizeof set) != (int)sizeof set || set.magic != SET_MAGIC
-        || set.octave < -3 || set.octave > 2 || set.wave >= TRIBE_NWAVE || set.eg >= TRIBE_NEG || set.ble_off > 1u)
+        || set.octave < -3 || set.octave > 2)
         bad = 1;
-    for (i = 0; i < NKN; i++)
-        bad |= set.knob[i] > 127u;
+    for (i = 0; i < NP; i++)
+        bad |= PAR[i].nopt ? set.v[i] >= PAR[i].nopt : set.v[i] > 127u;
     if (bad)
         settings_defaults();
     tribe_init();
@@ -214,6 +267,7 @@ static struct {
     int32_t turns[NE];                   /* detents since boot, per encoder */
     uint32_t turned_at[NE];              /* when each was last turned: it shows lit for a moment */
     uint32_t drum_seen, drum_at[TRIBE_NDRUM];   /* the drums' hit counts drawn, and when each last hit */
+    uint8_t page;                        /* PG_*: what K1..K4 edit */
     uint8_t redraw;
 } ui;
 
@@ -271,6 +325,87 @@ static void octave_text(char *t)
     t[2] = 0;
 }
 
+static void param_text(int p, char *t)   /* a setting's value as the screen shows it */
+{
+    if (PAR[p].nopt)
+        t[0] = 0, text_cat(t, PAR[p].opt[set.v[p]]);
+    else
+        int_text(set.v[p], t);
+}
+
+static uint32_t page_of(uint32_t pg, uint32_t *n)   /* a page's place among its button's pages (0-based), and how many */
+{
+    uint32_t i, k = 0;
+    *n = 0;
+    for (i = 0; i < NPG; i++)
+        if (PAGE[i].button == PAGE[pg].button) {
+            if (i < pg)
+                k++;
+            (*n)++;
+        }
+    return k;
+}
+
+static void page_title(uint32_t pg, char *t)  /* "LFO 1/2", "EG VCA 1/1" */
+{
+    uint32_t n, k = page_of(pg, &n);
+    t[0] = 0;
+    text_cat(t, PAGE[pg].name);
+    {
+        char d[4] = {' ', (char)('1' + k), '/', 0}, e[2] = {(char)('0' + n), 0};
+        text_cat(t, d);
+        text_cat(t, e);
+    }
+}
+
+static void page_text(char *t)           /* the page and its settings, for a screen reader: "LFO 1/2. RATE 64. ..." */
+{
+    uint32_t i;
+    char v[12];
+    page_title(ui.page, t + strlen(t));
+    for (i = 0; i < 4u; i++)
+        if (PAGE[ui.page].p[i] >= 0) {
+            text_cat(t, ". ");
+            text_cat(t, PAR[PAGE[ui.page].p[i]].name);
+            text_cat(t, " ");
+            param_text(PAGE[ui.page].p[i], v);
+            text_cat(t, v);
+        }
+}
+
+/* a page button: its first page, or, already on it, its next */
+static void page_button(uint32_t b)
+{
+    uint32_t i, first = NPG, next = NPG;
+    char t[96];
+    for (i = 0; i < NPG; i++)
+        if (PAGE[i].button == b) {
+            if (first == NPG)
+                first = i;
+            if (i > ui.page && next == NPG && PAGE[ui.page].button == b)
+                next = i;
+        }
+    if (first == NPG)
+        return;
+    ui.page = (uint8_t)(next < NPG ? next : first);
+    ui.redraw = 1;
+    app_say(PAGE[ui.page].name, "");
+    if (ann_on()) {                          /* the page's settings too */
+        t[0] = 0;
+        page_text(t);
+        ann_say(t, 0, ANN_NOW);
+    }
+}
+
+static int is_page_button(uint32_t b)
+{
+    uint32_t i;
+    for (i = 0; i < NPG; i++)
+        if (PAGE[i].button == b)
+            return 1;
+    return 0;
+}
+
 /* a screen reader that has just started listening (or asks) hears the whole screen */
 static void speak(void)
 {
@@ -280,10 +415,8 @@ static void speak(void)
         t[0] = 0;
         text_cat(t, APP_NAME ". OCTAVE ");
         text_cat(t, o);
-        text_cat(t, ". WAVE ");
-        text_cat(t, WAVE_NAME[set.wave]);
-        text_cat(t, ". EG ");
-        text_cat(t, EG_NAME[set.eg]);
+        text_cat(t, ". ");
+        page_text(t);
         if (midi_count) {                    /* the last MIDI message in, as the screen shows it */
             static const char *const PORT[NPORTS] = {"USB", "BLE", "TRS"};
             static const char HEX[] = "0123456789ABCDEF";
@@ -330,15 +463,16 @@ static void octave_step(int32_t d)
     app_say("OCTAVE", t);
 }
 
-int fmtribe_ble_off(void) { return set.ble_off; }
+int fmtribe_ble_off(void) { return set.v[P_BLE]; }
 
 /* REC held a second: Bluetooth off or on (kept with the settings, so it stays so at the next power-on) */
 static void ble_toggle(void)
 {
-    set.ble_off = (uint8_t)!set.ble_off;
+    set.v[P_BLE] = (uint8_t)!set.v[P_BLE];
     set_dirty = 1;
-    plat_ble_enable(!set.ble_off);
-    app_say("BLUETOOTH", set.ble_off ? "OFF" : "ON");
+    plat_ble_enable(!set.v[P_BLE]);
+    app_say("BLUETOOTH", set.v[P_BLE] ? "OFF" : "ON");
+    ui.redraw = 1;
 }
 
 /* REC: a Bluetooth MIDI device (FM1B_BLE_CENTRAL, lib/btdev): look for devices, then connect to the one ALGORITHM
@@ -379,26 +513,29 @@ static void input(void)
             ui.prs[k] = 0;
             ui.last_key = (int32_t)k;
             key_down(note, v);
-            plat_midi_send(0x09u | 0x90u << 8 | (uint32_t)note << 16 | v << 24, TO_USB | TO_BLE);   /* BLE: if built with it */
+            plat_midi_send(0x09u | (0x90u | set.v[P_SYNTH_CH]) << 8 | (uint32_t)note << 16 | v << 24, TO_USB | TO_BLE);
         } else if (!(keys & bit) && (ui.keys & bit)) {
             ui.prs[k] = 0;
             key_up(note);
-            plat_midi_send(0x08u | 0x80u << 8 | (uint32_t)note << 16, TO_USB | TO_BLE);
+            plat_midi_send(0x08u | (0x80u | set.v[P_SYNTH_CH]) << 8 | (uint32_t)note << 16, TO_USB | TO_BLE);
         } else if ((keys & bit) && touch_pressure(k) != ui.prs[k]) {   /* pressure: poly aftertouch */
             ui.prs[k] = touch_pressure(k);
             ui.redraw = 1;
-            plat_midi_send(0x0Au | 0xA0u << 8 | (uint32_t)note << 16 | (uint32_t)ui.prs[k] << 24, TO_USB | TO_BLE);
+            plat_midi_send(0x0Au | (0xA0u | set.v[P_SYNTH_CH]) << 8 | (uint32_t)note << 16 | (uint32_t)ui.prs[k] << 24,
+                           TO_USB | TO_BLE);
         }
     }
     for (k = 0; k < NB; k++) {               /* a button pressed: its name, and what it does here */
         uint32_t bit = 1u << k;
         if (!(btn & bit) || (ui.btn & bit))
             continue;
-        if (drum_button(k) >= 0) {           /* EDIT, GLO, HOME: BD, SN, HH (and out on channel 10) */
+        if (drum_button(k) >= 0) {           /* ARP, EDIT, FX: BD, SN, HH (and out on the drums' channel) */
             int d = drum_button(k);
             drum(d);
-            plat_midi_send(0x09u | 0x99u << 8 | (uint32_t)DRUM_NOTE[d] << 16 | 100u << 24, TO_USB | TO_BLE);
-            plat_midi_send(0x08u | 0x89u << 8 | (uint32_t)DRUM_NOTE[d] << 16, TO_USB | TO_BLE);
+            plat_midi_send(0x09u | (0x90u | set.v[P_DRUM_CH]) << 8 | (uint32_t)DRUM_NOTE[d] << 16 | 100u << 24, TO_USB | TO_BLE);
+            plat_midi_send(0x08u | (0x80u | set.v[P_DRUM_CH]) << 8 | (uint32_t)DRUM_NOTE[d] << 16, TO_USB | TO_BLE);
+        } else if (is_page_button(k)) {
+            page_button(k);
         } else if (k == B_OCTDN)
             octave_step(-1);
         else if (k == B_OCTUP)
@@ -424,7 +561,7 @@ static void input(void)
             }
         } else {
             ui.rec_t = 0;
-            if (FM1B_BLE_CENTRAL && !set.ble_off)
+            if (FM1B_BLE_CENTRAL && !set.v[P_BLE])
                 ble_device_button();
             else
                 app_say("BUTTON", "REC");
@@ -440,26 +577,22 @@ static void input(void)
         if (k == EN_ALGO && FM1B_BLE_CENTRAL && ui.looking) {
             btdev_choose(btdev_pick() + e);
             ble_device_say();
-        } else if (k == EN_PRESET) {
-            set.wave = (uint8_t)((set.wave + (e > 0 ? 1 : TRIBE_NWAVE - 1)) % TRIBE_NWAVE);
-            set_dirty = 1;
-            engine_update();
-            app_say("WAVE", WAVE_NAME[set.wave]);
-        } else if (k == EN_ALGO) {
-            set.eg = (uint8_t)((set.eg + (e > 0 ? 1 : TRIBE_NEG - 1)) % TRIBE_NEG);
-            set_dirty = 1;
-            engine_update();
-            app_say("EG", EG_NAME[set.eg]);
-        } else if (ENC_KNOB[k] >= 0) {       /* a detent a step; turned fast, three */
-            int kn = ENC_KNOB[k];
-            int32_t v = clamp((int32_t)set.knob[kn] + (e > 1 || e < -1 ? 3 * e : e), 0, 127);
-            if (v != set.knob[kn]) {
-                set.knob[kn] = (uint8_t)v;
+        } else if (k >= EN_K1 && PAGE[ui.page].p[k - EN_K1] >= 0) {
+            /* K1..K4: the page's settings; a knob a step a detent (three, turned fast), a switch a position */
+            int pn = PAGE[ui.page].p[k - EN_K1];
+            int32_t v = (int32_t)set.v[pn], hi = PAR[pn].nopt ? PAR[pn].nopt - 1 : 127;
+            v = clamp(v + (PAR[pn].nopt ? (e > 0 ? 1 : -1) : e > 1 || e < -1 ? 3 * e : e), 0, hi);
+            if (v != set.v[pn]) {
+                set.v[pn] = (uint8_t)v;
                 set_dirty = 1;
                 engine_update();
+                if (pn == P_BLE && FM1B_BLE)
+                    plat_ble_enable(!set.v[P_BLE]);
+                if (pn == P_SYNTH_CH && voice_note >= 0)   /* (its note off would go out on the new channel) */
+                    note_off(voice_note), nheld = 0;
             }
-            int_text(v, t);
-            app_say(KNOB_NAME[kn], t);
+            param_text(pn, t);
+            app_say(PAR[pn].name, t);
         }
     }
     if (keys != ui.keys || btn != ui.btn)
@@ -467,7 +600,7 @@ static void input(void)
     ui.keys = keys;
     ui.btn = btn;
     plat_glow(1);                            /* the unlit buttons glow, readable in the dark */
-    plat_leds(btn | (set_dirty ? 1u << B_SAVE : 0u), keys);
+    plat_leds(btn | 1u << PAGE[ui.page].button | (set_dirty ? 1u << B_SAVE : 0u), keys);   /* the page's button lit */
 }
 
 void app_input_only(void) { input(); }
@@ -511,7 +644,7 @@ static void draw(void)
         if (note >= 0) {                     /* the note, and the last key's velocity and pressure */
             int32_t x;
             note_name(note, t);
-            x = 230 - text_w(&FONT_B, t);
+            x = 196 - text_w(&FONT_B, t);
             cv_text(x, 6, &FONT_B, t, C_HI);
             if (ui.keys >> ui.last_key & 1u) {
                 char n[24] = "V ";
@@ -524,38 +657,61 @@ static void draw(void)
             }
         }
     }
+    {                                        /* the page's place on its button, top right: 1/2 */
+        uint32_t np, k = page_of(ui.page, &np);
+        char c[6] = {(char)('1' + k), '/', (char)('0' + np), 0};
+        cv_rect(202, 0, 38, 32, C_BLACK);
+        cv_text(230 - text_w(&FONT_B, c), 6, &FONT_B, c, C_GRAY);
+    }
     cv_blit(0, 0);
-    /* the panel: the five knobs (CUTOFF, PEAK, NOISE, LEVEL on K1..K4, RHYTHM on SELECT), lit for a moment after a
-     * turn; the WAVE and EG switches (PRESET, ALGO); the drum pads (EDIT, GLO, HOME), lit as they hit */
+    /* the panel: the page buttons' tabs, the page's lit (its button lit too); K1..K4's settings, each lit for a moment
+     * after a turn, a knob as a bar and its value, a switch as its position; the drum pads (EDIT, GLO, HOME), lit as
+     * they hit */
     cv_begin(240, 144, C_BLACK);
-    for (i = 0; i < NKN; i++) {
-        static const uint8_t ENC_OF[NKN] = {EN_K1, EN_K2, EN_K3, EN_K4, EN_SELECT};
-        static const char *const UNDER[NKN] = {"K1", "K2", "K3", "K4", "SELECT"};
-        int32_t x = 4 + (int32_t)i * 47, w = 43, v = set.knob[i];
-        int lit = ui.turned_at[ENC_OF[i]] && now - ui.turned_at[ENC_OF[i]] < 300u;
-        cv_text(x + (w - text_w(&FONT_XS, KNOB_NAME[i])) / 2, 0, &FONT_XS, KNOB_NAME[i], lit ? C_HI : C_GRAY);
-        cv_rect(x, 15, w, 7, C_LINE);
-        cv_rect(x + 1, 16, (v * (w - 2) + 63) / 127, 5, lit ? C_WHITE : C_HI);
-        int_text(v, t);
-        cv_text(x + (w - text_w(&FONT_XS, t)) / 2, 25, &FONT_XS, t, lit ? C_WHITE : C_AMB);
-        cv_text(x + (w - text_w(&FONT_XS, UNDER[i])) / 2, 38, &FONT_XS, UNDER[i], C_DIM);
+    {
+        uint32_t nt = 0, b, ntab = 0;
+        int32_t tw;
+        for (i = 0; i < NPG; i++)
+            ntab += !i || PAGE[i].button != PAGE[i - 1].button;
+        tw = 232 / (int32_t)ntab;
+        for (i = 0; i < NPG; i++) {
+            if (i && PAGE[i].button == PAGE[i - 1].button)
+                continue;                    /* one tab a button */
+            b = PAGE[i].button;
+            t[0] = 0;
+            text_cat(t, PAGE[i].name);
+            cell(4 + (int32_t)nt * tw, 0, tw - 2, t, PAGE[ui.page].button == b);
+            cv_text(4 + (int32_t)nt * tw + (tw - 2 - text_w(&FONT_XS, BTN_NAME[b])) / 2, 20, &FONT_XS, BTN_NAME[b], C_DIM);
+            nt++;
+        }
     }
-    cv_text(4, 56, &FONT_XS, "WAVE", C_GRAY);
-    cv_text(186, 56, &FONT_XS, "PRESET", C_DIM);
-    for (i = 0; i < TRIBE_NWAVE; i++) {
-        static const char *const W[TRIBE_NWAVE] = {"SAW", "TRI", "SQUARE"};
-        cell(44 + (int32_t)i * 46, 54, 44, W[i], set.wave == i);
+    for (i = 0; i < 4u; i++) {
+        static const char *const KN[4] = {"K1", "K2", "K3", "K4"};
+        int pn = PAGE[ui.page].p[i];
+        int32_t x = 4 + (int32_t)i * 58, w = 56;
+        int lit = ui.turned_at[EN_K1 + i] && now - ui.turned_at[EN_K1 + i] < 300u;
+        cv_text(x + (w - text_w(&FONT_XS, KN[i])) / 2, 84, &FONT_XS, KN[i], C_DIM);
+        if (pn < 0) {
+            cv_rect(x + w / 2 - 6, 60, 12, 1, C_LINE);
+            continue;
+        }
+        cv_text(x + (w - text_w(&FONT_XS, PAR[pn].name)) / 2, 38, &FONT_XS, PAR[pn].name, lit ? C_HI : C_GRAY);
+        param_text(pn, t);
+        if (PAR[pn].nopt) {
+            cell(x, 56, w, t, 1);
+        } else {
+            int32_t v = set.v[pn];
+            cv_rect(x, 54, w, 7, C_LINE);
+            cv_rect(x + 1, 55, (v * (w - 2) + 63) / 127, 5, lit ? C_WHITE : C_HI);
+            cv_text(x + (w - text_w(&FONT_XS, t)) / 2, 65, &FONT_XS, t, lit ? C_WHITE : C_AMB);
+        }
     }
-    cv_text(4, 80, &FONT_XS, "EG", C_GRAY);
-    cv_text(186, 80, &FONT_XS, "ALGO", C_DIM);
-    for (i = 0; i < TRIBE_NEG; i++)
-        cell(44 + (int32_t)i * 46, 78, 44, EG_NAME[i], set.eg == i);
     cv_text(4, 108, &FONT_XS, "DRUMS", C_GRAY);
     for (i = 0; i < TRIBE_NDRUM; i++) {
-        static const char *const B[TRIBE_NDRUM] = {"EDIT", "GLO", "HOME"};
         int lit = ui.drum_at[i] && now - ui.drum_at[i] < 150u;
         cell(44 + (int32_t)i * 46, 104, 44, DRUM_NAME[i], lit);
-        cv_text(44 + (int32_t)i * 46 + (44 - text_w(&FONT_XS, B[i])) / 2, 125, &FONT_XS, B[i], C_DIM);
+        cv_text(44 + (int32_t)i * 46 + (44 - text_w(&FONT_XS, BTN_NAME[DRUM_BTN[i]])) / 2, 125, &FONT_XS,
+                BTN_NAME[DRUM_BTN[i]], C_DIM);
     }
     cv_blit(0, 36);
     /* the keys, black above white: a held key fills to its velocity (amber), its pressure over that (white) */
@@ -594,6 +750,7 @@ static void draw(void)
 void app_ui_init(void)
 {
     touch_on(1);                             /* velocity and pressure: the keys' readings on */
+    ui.page = PG_VCF;                        /* the first page at each start */
     lcd_fill(0, 0, 240, 240, C_BLACK);
     ui.redraw = 1;
 }
@@ -614,7 +771,7 @@ void app_frame(void)
     if (FM1B_BLE_CENTRAL) {                  /* looking: a device found is named at once (REC connects to it) */
         static int found;
         int n = ui.looking ? btdev_count() : 0, ev;
-        btdev_page(ui.looking && !set.ble_off);
+        btdev_page(ui.looking && !set.v[P_BLE]);
         if (n > found && btdev_pick() < n)
             ble_device_say();
         found = n;
@@ -664,16 +821,18 @@ void app_frame(void)
 #ifdef PLAT_HOST
 int app_expect(const char *what, int *got)
 {
+    static const char *const P[NP] = {"cutoff", "peak", "wave", "noise", "eg", "level", "rhythm", "rate", "int",
+                                      "target", "mode", "lwave", "synth_ch", "drum_ch", "ble_off"};
+    int i;
+    for (i = 0; i < NP; i++)                 /* a setting by its name: its 0..127, or its switch's position */
+        if (!strcmp(what, P[i])) {
+            *got = set.v[i];
+            return 1;
+        }
     if (!strcmp(what, "octave"))
         *got = set.octave;
-    else if (!strcmp(what, "wave"))
-        *got = set.wave;
-    else if (!strcmp(what, "eg"))
-        *got = set.eg;
-    else if (!strncmp(what, "knob", 4))     /* knobN: CUTOFF 0, PEAK 1, NOISE 2, LEVEL 3, RHYTHM 4 */
-        *got = set.knob[atoi(what + 4) % NKN];
-    else if (!strncmp(what, "drum", 4))     /* drumN: hits of BD 0, SN 1, HH 2 */
-        *got = (int)(drum_hits >> (8 * (atoi(what + 4) % TRIBE_NDRUM)) & 0xFFu);
+    else if (!strcmp(what, "page"))         /* PG_*: 0 VCO VCF, 1 EG VCA, 2 LFO 1, 3 LFO 2, 4 GLOBAL */
+        *got = ui.page;
     else if (!strcmp(what, "note"))
         *got = voice_note;
     else if (!strcmp(what, "dirty"))
@@ -684,6 +843,8 @@ int app_expect(const char *what, int *got)
         *got = ui.prs[ui.last_key];
     else if (!strncmp(what, "turns", 5))    /* turnsN: encoder N's count (plat.h EN_*) */
         *got = ui.turns[atoi(what + 5) % NE];
+    else if (!strncmp(what, "drum", 4))     /* drumN: hits of BD 0, SN 1, HH 2 */
+        *got = (int)(drum_hits >> (8 * (atoi(what + 4) % TRIBE_NDRUM)) & 0xFFu);
     else
         return 0;
     return 1;
