@@ -26,6 +26,16 @@ PAGES = [("emu/", "Emulator"), ("install/", "Install"), ("quickstart/", "Quickst
          ("mirror/", "Mirror")]
 
 
+# the Markdown pages' colours (fm1-base's manual_html.py tokens) in the palette of the installer, emulator and mirror:
+# warm paper by day, warm dark by night, following the computer's setting (and data-theme, as those pages do)
+LIGHT = ("--paper: #faf4e8; --sheet: #f1e7d6; --rule: #e6dccb; --ink: #48392f; --muted: #725f4c; --hot: #e0683a; "
+         "--hot-t: #f7dccd; --cool: #c98a1e; --cool-t: #f3e3c3; --hot-ink: #b4481c; color-scheme: light;")
+DARK = ("--paper: #1c1814; --sheet: #26201b; --rule: #3a322a; --ink: #f2e8d8; --muted: #b3a28e; --hot: #f28a5a; "
+        "--hot-t: #3d2a1f; --cool: #e0b04a; --cool-t: #33291c; --hot-ink: #f28a5a; color-scheme: dark;")
+THEME = (f"<style>\n:root {{ {LIGHT} }}\n@media (prefers-color-scheme: dark) {{\n  :root:not([data-theme=\"light\"]) {{ {DARK} }}\n}}\n"
+         f":root[data-theme=\"dark\"] {{ {DARK} }}\nimg {{ border-radius: 4px; }}\n</style>\n")
+
+
 def header(name, repo, here, depth):
     """the site's header for a page DEPTH folders down: home, every page, the source (manual_html.py's markup)"""
     up = "../" * depth
@@ -59,6 +69,9 @@ def main(pkg, version, out):
                        flags=re.S)
         if n != 1:
             raise SystemExit(f"{f}: no site header")
+        if h.count("</head>") != 1:
+            raise SystemExit(f"{f}: no </head>")
+        h = h.replace("</head>", THEME + "</head>")
         f.write_text(h, encoding="utf-8")
     print(f"site: {out}: + quickstart/")
 

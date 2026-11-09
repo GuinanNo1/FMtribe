@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MPL-2.0
 # FMtribe's site on GitHub Pages (https://guinanno1.github.io/FMtribe/): after a release is built and attested
 # (release.yml), or by hand for a release that exists. The site carries that release's attested package, the
-# emulator built from the same tag, the installer, quickstart, manual and screen mirror (tools/make_pages.py).
+# emulator built from the same tag, the installer and screen mirror, and main's front page, quickstart and manual
+# (tools/make_pages.py), so a docs fix needs only a re-run.
 name: Publish site
 
 on:
@@ -56,6 +57,11 @@ jobs:
         with:
           ref: ${{ steps.rel.outputs.tag }}
           submodules: recursive
+      - name: The site's pages and docs from main (the emulator stays the release's code)
+        run: |
+          set -euo pipefail
+          git fetch -q --depth 1 origin "${{ github.event.repository.default_branch }}"
+          git checkout FETCH_HEAD -- tools/make_pages.py app/site app/docs
       - name: Python with Pillow (raqm, for the fonts)
         run: |
           set -euo pipefail
