@@ -1,0 +1,90 @@
+# SPDX-License-Identifier: MPL-2.0
+# FMtribe's site on GitHub Pages (https://guinanno1.github.io/FMtribe/): after a release is built and attested
+# (release.yml), or by hand for a release that exists. The site carries that release's attested package, the
+# emulator built from the same tag, the installer, quickstart, manual and screen mirror (tools/make_pages.py).
+name: Publish site
+
+on:
+  workflow_run:
+    workflows: ["Build and attest firmware"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish (empty: the latest release, prereleases included)"
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  site:
+    # by hand, or after a tag's release build that succeeded
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Which release
+        id: rel
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          RUN_TAG: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          set -euo pipefail
+          tag="${INPUT_TAG:-$RUN_TAG}"
+          if [[ -z "$tag" ]]; then
+            tag=$(gh release list --limit 1 --exclude-drafts --json tagName --jq '.[0].tagName')
+          fi
+          [[ "$tag" == v* ]] || { echo "not a release tag: '$tag'"; exit 1; }
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ steps.rel.outputs.tag }}
+          submodules: recursive
+      - name: Python with Pillow (raqm, for the fonts)
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -qq libfribidi0 libraqm0
+          python3 -m pip install --break-system-packages -q Pillow
+          python3 -c "from PIL import features; assert features.check('raqm'), 'Pillow without raqm'"
+      - name: Emscripten
+        run: |
+          set -euo pipefail
+          git clone -q --depth 1 https://github.com/emscripten-core/emsdk "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install 6.0.10 >/dev/null
+          "$RUNNER_TEMP/emsdk/emsdk" activate 6.0.10 >/dev/null
+      - name: The release's attested package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p app/build
+          gh release download "${{ steps.rel.outputs.tag }}" --pattern "fmtribe-${{ steps.rel.outputs.version }}.fwsc" --dir app/build
+      - name: Emulator and site
+        run: |
+          set -euo pipefail
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh" >/dev/null
+          v="${{ steps.rel.outputs.version }}"
+          ./build.sh --web --release "$v"
+          python3 tools/make_pages.py "app/build/fmtribe-$v.fwsc" "$v" app/build/pages
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/build/pages
+      - id: deploy
+        uses: actions/deploy-pages@v4

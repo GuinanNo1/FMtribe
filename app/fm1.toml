@@ -1,5 +1,5 @@
 # FMtribe's build settings (fm1-base's tools/build.py: ./build.sh)
-name = "FMTRIBE"               # the build's files: fmtribe.fwsc, fmtribe-X.Y.fwsc; APP_NAME is in app.h
+name = "FMtribe"               # the build's files: fmtribe.fwsc, fmtribe-X.Y.fwsc; APP_NAME is in app.h
 id_prefix = "FM-1_59"          # package identity: dev FM-1_5900, releases FM-1_59XXYYZZ (GIO-1 is FM-1_58)
 usb_manufacturer = "FMtribe"
 usb_product = "FMtribe FM-1"
@@ -10,6 +10,7 @@ ble = true
 ble_central = true             # the FM-1 connects to Bluetooth MIDI keyboards too (~8 KB flash; may go if RAM is short)
 # wifi stays off: Bluetooth or Wi-Fi, not both
 usb_audio_in = true            # the FM-1's sound recordable over USB-C (named from the computer's side)
+mirror = true                  # the screen and panel mirrored to a computer (the site's Mirror page)
 # the site (tools/make_site.py, tools/publish_site.sh)
 tagline = "a monotribe-style analogue groove box for the FM-1, written from scratch"
 repo = "https://github.com/GuinanNo1/FMtribe"

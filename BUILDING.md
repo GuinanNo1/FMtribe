@@ -67,11 +67,19 @@ python3 base/tools/fm1_install.py app/build/fmtribe.fwsc
 
 Push a tag `vX.Y` (or `vX.Y-alpha` for a prerelease). `.github/workflows/release.yml` builds it on GitHub with the
 shared FM-1 builder (`zvenson/fm1-build@v1`), runs `tests/run_tests.sh`, signs build provenance and publishes the
-release. Notes come from `docs/releases/TAG.md` if present. The site:
+release. Notes come from `docs/releases/TAG.md` if present.
+
+## The site
+
+`.github/workflows/pages.yml` publishes https://guinanno1.github.io/FMtribe/ after each release build: the front
+page, installer, emulator, quickstart (`app/site/quickstart.md`), manual (`app/docs/MANUAL.md`) and screen mirror,
+made by `tools/make_pages.py` around the release's attested package. Run it by hand from the Actions tab
+("Publish site") to republish a release. Locally, with Emscripten:
 
 ```
 gh release download vX.Y --pattern '*.fwsc' --dir app/build
-base/tools/publish_site.sh app X.Y app/build/fmtribe-X.Y.fwsc
+./build.sh --web --release X.Y
+python3 tools/make_pages.py app/build/fmtribe-X.Y.fwsc X.Y app/build/pages
 ```
 
 ## Updating fm1-base

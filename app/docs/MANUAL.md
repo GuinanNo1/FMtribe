@@ -16,8 +16,9 @@ This manual describes that build and will be rewritten as the instrument arrives
 3. Controls
 4. Saving
 5. MIDI and audio
-6. The screen reader
-7. Troubleshooting
+6. The screen mirror
+7. The screen reader
+8. Troubleshooting
 
 ---
 
@@ -29,7 +30,7 @@ mouse, a touch screen or your computer keyboard.
 To install it from the browser, use Chrome or Edge. Connect the FM-1 by USB, open the installer and press Install.
 The browser asks once to allow MIDI, so allow it. Don't unplug the cable while it writes.
 
-To install it from a terminal, run `python3 tools/fm1_install.py template-VERSION.fwsc`.
+To install it from a terminal, run `python3 base/tools/fm1_install.py fmtribe-VERSION.fwsc` from FMtribe's source.
 
 To go back to the stock firmware, use the installer's last section, which writes M-VAVE's own firmware back. You
 can recover an FM-1 that doesn't start, too. For details, see felucca-bsp's `tools/fm1_rescue.sh`.
@@ -60,7 +61,7 @@ can recover an FM-1 that doesn't start, too. For details, see felucca-bsp's `too
 | MASTER | Sets the volume. |
 | SAVE | Saves the octave, the wave and whether Bluetooth is on or off. SAVE lights while there's something to save. |
 | REC | Press it to find and connect a Bluetooth MIDI device. Hold it for a second to switch Bluetooth off or on. For details, see MIDI and audio. |
-| Every other button and knob | Shows its name on the screen, and does nothing else. This is where you wire up your own firmware. |
+| Every other button and knob | Shows its name on the screen, and does nothing else yet. The synth, drums and sequencer will use them. |
 
 ---
 
@@ -100,7 +101,15 @@ the FM-1's speaker and headphones, mixed with the FM-1's own sound, at MASTER's 
 
 ---
 
-## 6. The screen reader
+## 6. The screen mirror
+
+The site's [Mirror](../mirror/) page shows the FM-1's screen and panel live on your computer, in Chrome or Edge,
+over the USB cable. Press Connect and allow MIDI. Press Control to play the FM-1 from the page: click its buttons
+and keys, and scroll over a knob to turn it. Close other programs that use the FM-1's MIDI port first.
+
+---
+
+## 7. The screen reader
 
 FMtribe tells a screen reader what's on its screen, through the
 [FM-1 Screen Reader](https://charlesvestal.github.io/fm1-reader/). When the reader starts listening, it hears the
@@ -109,7 +118,7 @@ reader or with its built-in voice.
 
 ---
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 If you hear no sound, turn MASTER up. The voice plays only while you hold a key.
 

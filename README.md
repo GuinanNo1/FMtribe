@@ -4,8 +4,9 @@ Open-source firmware for the M-VAVE FM-1 that recreates the sound and controls o
 groove box (the Korg monotribe): one VCO, a two-pole MS-style filter, an LFO, three analogue-style drums and an
 eight-step sequencer.
 
-**Status: scaffolding.** The repository builds and runs fm1-base's template voice under the FMtribe name. The
-instrument itself comes next.
+**Status: early test build.** It plays fm1-base's test voice under the FMtribe name; the instrument itself comes
+next. Install it from the browser at **https://guinanno1.github.io/FMtribe/**, which also has the emulator, a
+quickstart, the manual and a screen mirror.
 
 FMtribe is a clean-room recreation. It contains no Korg code or firmware and no code from other emulations; its
 sound is modelled from published circuit papers and fitted to public recordings of real units. See
