@@ -26,7 +26,8 @@ shows which one, such as VCF VCA 2/2. FMtribe starts on HOME.
 
 | Page (button) | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
-| HOME (HOME) | LEVEL | RHYTHM | CUTOFF | PEAK |
+| HOME 1/2 (HOME) | LEVEL | RHYTHM | CUTOFF | PEAK |
+| RANGE MOTION 2/2 (HOME) | RANGE | MOTION | | |
 | VCO 1/2 (ENV) | NOISE | RANGE | | |
 | VCF VCA 2/2 (ENV) | CUTOFF | PEAK | LEVEL | EG |
 | LFO (LFO) | RATE | INT | TARGET | MODE |
@@ -34,7 +35,7 @@ shows which one, such as VCF VCA 2/2. FMtribe starts on HOME.
 | STEP 1/2 (SEQ) | TEMPO | SWING | STEPS | GATE |
 | EDIT 2/2 (SEQ) | STEP | NOTE | GATE | ON |
 | MIDI 1/3 (GLO) | SYNTH CH | DRUM CH | SYNC | CLOCK OUT |
-| GLOBAL 2/3 (GLO) | BLE MIDI | KEY LIGHT | GLOW | |
+| GLOBAL 2/3 (GLO) | BLE MIDI | KEY LIGHT | GLOW | PREVIEW |
 | DEVICES 3/3 (GLO) | DEVICE | | | |
 
 On every page, OCT− and OCT+ set the octave and SELECT the VCO's wave. On the SEQ pages, SELECT moves the step cursor

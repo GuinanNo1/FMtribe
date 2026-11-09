@@ -16,12 +16,14 @@ enum { SEQ_SYNTH, SEQ_BD, SEQ_SN, SEQ_HH, SEQ_NPART };
 #define SEQ_SLOTS 16                     /* slot 2s: step s; 2s + 1: half-way through it */
 #define SEQ_TPS 24                       /* ticks a step (a 16th note at 96 ppqn) */
 #define SEQ_GATE_TIE 127                 /* gate 127: 100 %, the note runs on into the next */
+#define SEQ_NO_VOL 255                   /* a slot with no MOTION VOLUME recorded */
 
 typedef struct {
     uint8_t note[SEQ_SLOTS];             /* the synth's note at each slot (MIDI) */
     uint8_t gate[SEQ_SLOTS];             /* and its gate time, 0 (1.4 % of the step) .. 127 (100 %, tied) */
     uint16_t on[SEQ_NPART];              /* the slots that play, per part (bit = slot) */
     uint8_t active[SEQ_NPART];           /* the active steps, per part (bit = step; never all off) */
+    uint8_t vol[SEQ_SLOTS];              /* MOTION VOLUME: the synth's level at each slot, 0..127 (SEQ_NO_VOL: none) */
     uint8_t steps16;                     /* the synth's half slots play too (v2 16-step synth) */
     uint8_t rsv;
 } seq_pattern_t;
@@ -31,6 +33,7 @@ void seq_cb_note_on(uint8_t note);
 void seq_cb_note_off(void);
 void seq_cb_drum(int part);              /* SEQ_BD .. SEQ_HH */
 void seq_cb_clock(uint8_t status);       /* MIDI clock out: 0xF8, 0xFA start, 0xFC stop (when clock out is on) */
+void seq_cb_motion(uint8_t vol);         /* a synth slot comes round: its MOTION VOLUME (0..127, or SEQ_NO_VOL) */
 
 void seq_init(seq_pattern_t *p);         /* the pattern the sequencer plays (the app's, saved with its settings) */
 void seq_clear(seq_pattern_t *p, int what);   /* SEQ_CLEAR_* */

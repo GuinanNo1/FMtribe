@@ -20,6 +20,7 @@ void seq_cb_note_on(uint8_t note) { log_ev('N', note); }
 void seq_cb_note_off(void) { log_ev('O', 0); }
 void seq_cb_drum(int part) { log_ev('D', part); }
 void seq_cb_clock(uint8_t st) { log_ev('C', st); }
+void seq_cb_motion(uint8_t vol) { if (vol != SEQ_NO_VOL) log_ev('V', vol); }
 
 static void run(uint32_t samples)                /* as app_render would: blocks of 256, split at the ticks */
 {
@@ -139,6 +140,20 @@ int main(void)
     b = nth('O', -1, 0);
     CHECK(a >= 0 && b > a && fabs((ev[b].t - ev[a].t) / step - 0.507) < 0.03, "live gate 63 over the step's 0: %.3f (0.507)", (ev[b].t - ev[a].t) / step);
     seq_gate_live(-1);
+    seq_play(0);
+    run(10);
+
+    printf("MOTION VOLUME\n");
+    fresh();
+    P.vol[0] = 40;                               /* step 1's level; step 2's half slot ignored in 8-step mode */
+    P.vol[3] = 90;
+    P.vol[4] = 127;
+    seq_play(1);
+    run((uint32_t)(step * 3));
+    a = nth('V', -1, 0);
+    CHECK(a >= 0 && ev[a].v == 40 && ev[a].t < 10, "step 1's level at once: %d", a >= 0 ? ev[a].v : -1);
+    CHECK(count('V', 90, 0, 1u << 30) == 0, "8-step mode: a half slot's level is ignored");
+    CHECK(count('V', 127, 0, 1u << 30) == 1, "step 3's level");
     seq_play(0);
     run(10);
 

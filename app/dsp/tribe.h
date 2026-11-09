@@ -27,6 +27,7 @@ typedef struct {
     float lfo_rate;    /* 0..1: RATE, exponential over the MODE's range (FAST 1 Hz..5 kHz, SLOW and 1SHOT 0.05..18 Hz) */
     float lfo_int;     /* 0..1: INT., 0 none */
     float decay[3];    /* the drums' decays, BD SN HH: a multiple of the stock time (1 stock; the decay mods' range) */
+    float glide;       /* seconds: the pitch's slide to a new note played legato (0 none; RANGE NARROW / WIDE) */
     uint8_t wave;      /* TRIBE_SAW .. */
     uint8_t eg;        /* TRIBE_DECAY .. */
     uint8_t lfo_target;   /* TRIBE_LFO_VCO .. */
@@ -39,6 +40,7 @@ void tribe_set(const tribe_params_t *p);        /* the panel's settings (copied;
 void tribe_note_on(float pitch);                /* MIDI note number, fractional for bend; retriggers the EG */
 void tribe_note_glide(float pitch);             /* change pitch while held, no retrigger (legato, bend) */
 void tribe_note_off(void);
+void tribe_motion(float level);                 /* MOTION VOLUME: the synth's level 0..1 instead of LEVEL (-1: LEVEL) */
 void tribe_drum(int which);                     /* TRIBE_BD .. */
 void tribe_panic(void);                         /* silence now */
 
@@ -49,5 +51,6 @@ void tribe_render(float *out, uint32_t n);
  * and MODE, and its output now (-1..1, before INT) */
 float tribe_cutoff_hz(float cutoff01);
 float tribe_eg_level(void);
+float tribe_pitch_now(void);                    /* the pitch sounding (a glide under way), as a MIDI note */
 float tribe_lfo_hz(float rate01, int mode);
 float tribe_lfo_out(void);

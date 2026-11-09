@@ -42,7 +42,7 @@ expect peak_db_min -30
 midi 80 3C 00
 listen
 wait 100
-said FMTRIBE. OCTAVE +1. HOME 1/1. LEVEL 100. RHYTHM 90. CUTOFF 80. PEAK 30
+said FMTRIBE. OCTAVE +1. HOME 1/2. LEVEL 100. RHYTHM 90. CUTOFF 80. PEAK 30
 tap FX
 wait 30
 said BUTTON FX
@@ -77,7 +77,7 @@ wait 1200
 tap GLO
 tap GLO
 wait 30
-expect page 8
+expect page 9
 turn K1 1
 wait 50
 said BLE MIDI OFF
@@ -98,7 +98,7 @@ expect ble 2
 # lets it go (lib/btdev)
 tap GLO
 wait 700
-expect page 9
+expect page 10
 expect bledev 0
 shot devices.png
 tap SAVE

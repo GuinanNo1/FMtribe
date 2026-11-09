@@ -277,6 +277,31 @@ int main(int argc, char **argv)
         CHECK(fabs(r[0] - r[2] - 21) < 1.5, "HH %.1f dB under BD (EST 21)", r[0] - r[2]);
     }
 
+    printf("Glide (RANGE NARROW / WIDE: a GUESS at the times)\n");
+    {
+        tribe_params_t g = p;
+        g.eg = TRIBE_GATE;
+        g.glide = 0.3f;
+        reset(&g);
+        tribe_note_on(48.0f);
+        render(buf, 4410);
+        CHECK(fabs(tribe_pitch_now() - 48.0) < 0.01, "a first note jumps to its pitch: %.2f", tribe_pitch_now());
+        tribe_note_on(60.0f);                    /* legato: the gate still held */
+        render(buf, 13230);                      /* 300 ms, one time constant: 63 %% of the way */
+        CHECK(fabs(tribe_pitch_now() - (60 - 12 * exp(-1.0))) < 0.3, "legato glides: %.2f after one time constant (%.2f)",
+              tribe_pitch_now(), 60 - 12 * exp(-1.0));
+        tribe_note_off();
+        render(buf, 22050);
+        tribe_note_on(48.0f);                    /* a new touch after a release: no glide */
+        render(buf, 441);
+        CHECK(fabs(tribe_pitch_now() - 48.0) < 0.01, "after a release, a new note jumps: %.2f", tribe_pitch_now());
+        tribe_motion(0.0f);                      /* MOTION VOLUME at 0: silent, after the 5 ms smoothing */
+        render(buf, 2205);
+        render(buf, 4410);
+        CHECK(rms(buf, 4410) < 1e-4, "MOTION VOLUME 0: silent (rms %.6f)", rms(buf, 4410));
+        tribe_motion(-1.0f);
+    }
+
     printf("LFO (rates from the manual; depth and 1SHOT range are GUESSES)\n");
     {
         static const struct { int mode; float r; double lo, hi; } R[4] = {

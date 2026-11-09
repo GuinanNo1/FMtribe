@@ -42,17 +42,17 @@ halfband; Decay/Gate/Attack EGs; BD/SN/HH. `tests/host/tribe_test.c` checks each
 writes WAVs); `app/tests/sound.txt` covers the panel and MIDI map. Constants marked GUESS in tribe.c (Gate/Attack,
 release ~12 ms, SN tone/noise balance) wait for the prototype comparison. Known gap: self-oscillation level rises
 ~2.5 dB from 80 Hz to 18 kHz; the recordings suggest it falls ~6 dB from 200 Hz to 3.5 kHz.
-UI (0.4): pages on buttons (app.c PAGE[]), HOME first (the start page, 1/1: LEVEL, RHYTHM, CUTOFF, PEAK), then the monotribe's panel left to
+UI (0.4): pages on buttons (app.c PAGE[]), HOME first (the start page, 1/2: LEVEL, RHYTHM, CUTOFF, PEAK; RANGE MOTION 2/2: RANGE, MOTION), then the monotribe's panel left to
 right: a button shows its first page,
 pressed again its next; K1–K4 edit the page; the header shows the page name (left, in place of the app name) and x/y (right). ENV VCO 1/2 (NOISE
-RANGE; RANGE WIDE/NARROW/KEY stored, only KEY plays yet) and VCF VCA 2/2 (CUTOFF PEAK LEVEL EG); LFO (RATE INT TARGET
+RANGE; RANGE WIDE/NARROW = slow/fast glide (tribe glide, legato only; times GUESS), KEY none) and VCF VCA 2/2 (CUTOFF PEAK LEVEL EG); LFO (RATE INT TARGET
 MODE); ARP DRUMS (RHYTHM, BD/SN/HH DECAY; F#-G#-A# black keys are pads); SEQ STEP 1/2 (TEMPO SWING STEPS GATE) and
 EDIT 2/2 (STEP NOTE GATE ON, piano roll); GLO MIDI 1/3 (SYNTH CH DRUM CH SYNC CLOCK OUT), GLOBAL 2/3 (BLE MIDI, KEY
-LIGHT, GLOW), DEVICES 3/3 (K1 picks, SAVE connects/lets go; scans while the page is up). Constant everywhere: OCT-/+
+LIGHT, GLOW, PREVIEW = DRUM PREVIEW, default on), DEVICES 3/3 (K1 picks, SAVE connects/lets go; scans while the page is up). Constant everywhere: OCT-/+
 the octave; SELECT the VCO WAVE (on SEQ pages the step cursor ed_slot); ALGO the LFO WAVE on LFO; PRESET the part on SEQ
 pages (part_pick; also the black part keys on STEP). EDIT edits the picked part: synth piano roll, or a drum's 16
 slots (cursor by slot, K4 ON its hits, NOTE/GATE '-'). SEL, EDIT free (the user will assign SEL later); FX
-planned as the drum rolls button. Keep to the monotribe's controls (no per-drum levels: RHYTHM only). Settings are PAR[] (knob 0..127 or switch), saved as "FMT7" with
+planned as the drum rolls button. Keep to the monotribe's controls (no per-drum levels: RHYTHM only). Settings are PAR[] (knob 0..127 or switch), saved as "FMT8" with
 the pattern. pget/pset reach pattern-backed settings (STEPS, EDIT's STEP/NOTE/GATE/ON) and the BLE device pick (NSAVED).
 Sequencer (0.3, UI 0.4): app/seq/seq.c (o2), tests/host/seq_test.c, app/tests/seq.txt. 8 steps x 2 slots, parts
 SYNTH/BD/SN/HH, per-part active steps, gate per synth slot (127 tie), 16-step synth, swing, 96 ppqn ticks in the
@@ -62,10 +62,13 @@ a clock) and out; seq_gate_live (GATE TIME). STEP is the monotribe's step row on
 note/hit; lit: playhead, or the synth cursor when stopped). Black: F#3 G#3 A#3 C#4 = BD SN HH SYNTH (hold a drum's
 key + step = half-step), D#4 ACTIVE STEP (hold + steps), F#4 GATE TIME: held while playing, white keys are a ribbon
 (left 1.4 %, right 127/tie), recorded into each synth step with REC; held while stopped, the v2 multi-function key
-(steps 1-4 INITIALIZE ALL/SYNTH/RHYTHM/ACTIVE, 5 S&H, 6 16-STEP SYNTH, 7 GATE TIME HOLD, 8 HALF TEMPO). REC arms;
+(steps 1-4 INITIALIZE ALL/SYNTH/RHYTHM/ACTIVE, 5 S&H, 6 16-STEP SYNTH, 7 GATE TIME HOLD = Korg's: recording pitch
+keeps recorded gates, 8 HALF TEMPO). MOTION VOLUME: pat.vol[slot] (SEQ_NO_VOL none) via seq_cb_motion ->
+tribe_motion (replaces LEVEL); ACTIVE STEP held while playing = keys ribbon (left 0, right 127), recorded with REC;
+LEVEL turned while recording is recorded too; MOTION switch plays them back. REC arms;
 armed, keys play+record synth on any page (on STEP the white keys), DRUMS pads record drums. Manual section 4
 "Setting gate times" documents the gate methods. Manual screenshots: app/tests/screens.txt -> app/docs/img.
-Not yet: Flux, drum rolls, volume automation, ribbon modes (RANGE WIDE/NARROW).
+Not yet: Flux, drum rolls (Ver.2: GATE TIME + ribbon with a drum part; FX planned too).
 LFO (0.3): tribe.c, rates from the manual; depth (±1 oct pitch, ±3 oct cutoff), INT square-law taper, 1SHOT on the
 SLOW range and the falling saw are GUESSES.
 Next: user testing in the emulator; then Flux (continuous synth recording), drum rolls, ribbon modes.

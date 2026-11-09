@@ -7,7 +7,7 @@
 wait 600
 tap SEQ
 wait 30
-expect page 5
+expect page 6
 expect tempo 120
 expect part 0
 shot seq_empty.png
@@ -19,7 +19,7 @@ key 7 up
 wait 30
 tap SEQ
 wait 30
-expect page 5
+expect page 6
 tapkey 0
 tapkey 2
 tapkey 4
@@ -178,7 +178,7 @@ wait 30
 key 8 up
 tap SEQ
 wait 30
-expect page 6
+expect page 7
 expect edstep 4
 turn SELECT -2
 expect edstep 0
@@ -237,7 +237,7 @@ wait 30
 # GATE TIME while it plays: the keys a ribbon, left 1.4 %, right 100 %; let go, the pattern's gates again
 tap SEQ
 wait 30
-expect page 5
+expect page 6
 press PLAY
 wait 20
 release PLAY
@@ -266,6 +266,78 @@ tap PLAY
 wait 30
 expect gate0 0
 expect gate4 0
+# MOTION VOLUME (Ver.2): ACTIVE STEP held while it plays, the white keys a ribbon, left silent, right full; let go,
+# the recorded levels again. With REC on, each synth step keeps the level it plays with
+press PLAY
+wait 20
+release PLAY
+key 10 down
+wait 30
+tapkey 26
+wait 30
+expect motion_live 127
+tapkey 9
+wait 30
+expect motion_live 42
+key 10 up
+wait 30
+expect motion_live -1
+expect vol0 255
+tap REC
+wait 30
+key 10 down
+wait 30
+tapkey 0
+wait 1100
+key 10 up
+wait 30
+tap REC
+tap PLAY
+wait 30
+expect vol0 0
+expect vol4 0
+# HOME 2/2, RANGE MOTION: MOTION off and on; RANGE KEY, NARROW, WIDE (a fast, a slow glide)
+tap HOME
+tap HOME
+wait 30
+expect page 1
+turn K2 -1
+expect motion 0
+turn K2 1
+expect motion 1
+turn K1 -1
+expect range 1
+turn K1 -1
+expect range 0
+turn K1 2
+expect range 2
+# LEVEL turned while it records: MOTION VOLUME
+tap HOME
+wait 30
+expect page 0
+tap REC
+wait 30
+press PLAY
+wait 20
+release PLAY
+turn K1 -36
+wait 30
+tap PLAY
+wait 30
+tap REC
+expect vol0 <100
+expect level 64
+turn K1 36
+# GATE TIME HOLD (Ver.2: GATE TIME + step 7, stopped): recording pitch keeps the steps' recorded gates. Step 1's gate
+# is 0 from GATE TIME above, and stays 0 though the new note is held for half the step
+tap SEQ
+wait 30
+key 13 down
+wait 30
+tapkey 11
+wait 30
+key 13 up
+expect gate_hold 1
 # REC while playing: keys play and record the synth on any page, the DRUMS page's pads the drums
 tap ARP
 wait 30
@@ -288,12 +360,31 @@ wait 30
 tap REC
 expect rec 0
 expect note0 65
-expect gate0 <100
+expect gate0 0
 expect on0 17
+tap SEQ
+wait 30
+key 13 down
+wait 30
+tapkey 11
+wait 30
+key 13 up
+expect gate_hold 0
+tap ARP
+wait 30
+# DRUM PREVIEW (GLOBAL 2/3, K4): off, the part keys pick silently
+tap GLO
+tap GLO
+wait 30
+expect page 9
+turn K4 -1
+expect preview 0
+turn K4 1
+expect preview 1
 # GATE TIME and step 3, stopped: INITIALIZE RHYTHM
 tap SEQ
 wait 30
-expect page 5
+expect page 6
 key 13 down
 wait 30
 tapkey 4
@@ -319,6 +410,7 @@ key 13 up
 wait 30
 expect on0 0
 expect note0 60
+expect vol0 255
 # MIDI clock in: SYNC MIDI, a start, then six clocks a step
 key 1 down
 wait 30
@@ -330,7 +422,7 @@ tapkey 7
 tapkey 11
 tap GLO
 wait 30
-expect page 7
+expect page 8
 turn K3 1
 expect sync 1
 midi FA

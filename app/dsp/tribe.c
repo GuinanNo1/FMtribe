@@ -35,6 +35,9 @@ static inline float white(void)                 /* xorshift32, uniform -1..1 */
 /* ----------------------------------------------------------------- the VCO --- */
 static float vco_ph, vco_dt;                    /* phase in turns; increment per 2x sample */
 static volatile float note_pitch = 60.0f;       /* MIDI note, fractional */
+static float pitch_now = 60.0f;                  /* the pitch sounding: it glides to note_pitch (RANGE) */
+static volatile float motion_lvl = -1.0f;        /* MOTION VOLUME: the level instead of LEVEL (-1 none) */
+static float lvl_s;                              /* the level, smoothed (no click as MOTION steps) */
 
 static inline float blep(float t, float dt)     /* PolyBLEP residual for a unit step at t = 0 */
 {
@@ -351,7 +354,8 @@ static inline float soft_limit(float x)         /* linear to 0.8, then a tanh kn
 void tribe_render(float *out, uint32_t n)
 {
     uint32_t i, ev;
-    float cut_t, peak_t, k_sm, lvl, rhy, nz, lfo_inc, amt, pdep, cdep, pitch, dt0;
+    float cut_t, peak_t, k_sm, lvl, rhy, nz, lfo_inc, amt, pdep, cdep, pitch, dt0, k_gl;
+    int gliding;
     k35_t c;
     if (live_seq != par_seq) {
         live_seq = par_seq;
@@ -362,6 +366,8 @@ void tribe_render(float *out, uint32_t n)
     }
     if (ev_on) {                                /* note on: the EG from the top (and the VCO's phase kept) */
         ev_on = 0;
+        if (!eg_gate || live.glide <= 0.0f)     /* a new touch jumps; one played legato glides (RANGE) */
+            pitch_now = note_pitch;
         eg_gate = 1;
         eg_e = 1.0f;
         lfo_sync(live.lfo_mode, live.lfo_wave);
@@ -383,14 +389,18 @@ void tribe_render(float *out, uint32_t n)
             hh_amp = 1.0f;
     }
     pitch = note_pitch;
-    dt0 = 440.0f * fm_exp2f((pitch - 69.0f) * (1.0f / 12.0f)) / SR2;
+    if (live.glide <= 0.0f)
+        pitch_now = pitch;
+    dt0 = 440.0f * fm_exp2f((pitch_now - 69.0f) * (1.0f / 12.0f)) / SR2;
+    k_gl = live.glide > 0.0f ? 1.0f - fm_expf(-1.0f / (live.glide * SR)) : 1.0f;
+    gliding = pitch_now - pitch > 0.001f || pitch - pitch_now > 0.001f;
     lfo_inc = tribe_lfo_hz(live.lfo_rate, live.lfo_mode) * (1.0f / SR);
     amt = live.lfo_int * live.lfo_int;
     pdep = live.lfo_target != TRIBE_LFO_VCF ? amt * LFO_PITCH_SEMI : 0.0f;
     cdep = live.lfo_target != TRIBE_LFO_VCO ? amt * LFO_CUT_OCT / CUT_OCT : 0.0f;   /* in CUTOFF's 0..1 units */
     cut_t = live.cutoff;
     peak_t = live.peak;
-    lvl = live.level * 0.9f;
+    lvl = (motion_lvl >= 0.0f ? motion_lvl : live.level) * 0.9f;
     rhy = live.rhythm;
     nz = live.noise;
     k_sm = 1.0f - fm_expf(-1.0f / (0.005f * SR));
@@ -398,6 +408,11 @@ void tribe_render(float *out, uint32_t n)
         float s, x, l = lfo_step(lfo_inc, live.lfo_wave, live.lfo_mode);
         cut_s += (cut_t - cut_s) * k_sm;
         peak_s += (peak_t - peak_s) * k_sm;
+        if (gliding) {                          /* the glide: the pitch eases to the note, an exp2 a sample */
+            pitch_now += (pitch - pitch_now) * k_gl;
+            dt0 = 440.0f * fm_exp2f((pitch_now - 69.0f) * (1.0f / 12.0f)) / SR2;
+        }
+        lvl_s += (lvl - lvl_s) * k_sm;
         vco_dt = pdep != 0.0f ? dt0 * fm_exp2f(l * pdep * (1.0f / 12.0f)) : dt0;
         if (vco_dt > 0.45f)
             vco_dt = 0.45f;
@@ -407,7 +422,7 @@ void tribe_render(float *out, uint32_t n)
         hb_push(k35(&c, x));
         x = 0.55f * (vco(live.wave) + nz * white());
         hb_push(k35(&c, x));
-        s = hb_out() * eg_step(live.eg) * lvl;
+        s = hb_out() * eg_step(live.eg) * lvl_s;
         s += drums() * rhy;
         x = s - dc_x + 0.99929f * dc_y;         /* DC block, 5 Hz */
         dc_x = s;
@@ -440,6 +455,7 @@ void tribe_set(const tribe_params_t *p)
         for (d = 0; d < 3; d++)
             par.decay[d] = fm_clampf(par.decay[d], 0.25f, 16.0f);
     }
+    par.glide = fm_clampf(par.glide, 0.0f, 2.0f);
     par_seq++;
 }
 
@@ -451,6 +467,8 @@ void tribe_note_on(float pitch)
 }
 void tribe_note_glide(float pitch) { note_pitch = pitch; }
 void tribe_note_off(void) { ev_off = 1; }
+float tribe_pitch_now(void) { return pitch_now; }
+void tribe_motion(float level) { motion_lvl = level < 0.0f ? -1.0f : level > 1.0f ? 1.0f : level; }
 void tribe_drum(int which)
 {
     if (which >= 0 && which < TRIBE_NDRUM)
@@ -478,6 +496,7 @@ void tribe_init(void)
     hh_g = fm_tanf(FM_PI * 4000.0f / SR);
     hh_r = 1.41421356f;                         /* the SVF's 2R: Q 0.707 */
     cut_s = par.cutoff;
+    lvl_s = par.level * 0.9f;
     peak_s = par.peak;
     lfo_done = 1;
     lfo_sh = 0.0f;

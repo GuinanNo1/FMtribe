@@ -43,6 +43,7 @@ void seq_clear(seq_pattern_t *p, int what)
         for (i = 0; i < SEQ_SLOTS; i++) {
             p->note[i] = 60;
             p->gate[i] = 64;
+            p->vol[i] = SEQ_NO_VOL;
         }
     }
     if (what == SEQ_CLEAR_ALL || what == SEQ_CLEAR_DRUMS)
@@ -99,6 +100,8 @@ static float fm1_max1(float x) { return x < 1.0f ? 1.0f : x; }
 
 static void slot(int part, int k, uint32_t len)  /* a part's slot comes round */
 {
+    if (part == SEQ_SYNTH && (!(k & 1) || pat->steps16))   /* the synth's level for the slot (MOTION VOLUME) */
+        seq_cb_motion(pat->vol[k]);
     if (!(pat->on[part] >> k & 1u))
         return;
     if (part != SEQ_SYNTH) {

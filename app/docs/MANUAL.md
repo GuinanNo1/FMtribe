@@ -64,7 +64,8 @@ the page on the screen. A switch moves one position for each click of the knob.
 
 | Page (button) | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
-| HOME (HOME) | LEVEL | RHYTHM | CUTOFF | PEAK |
+| HOME 1/2 (HOME) | LEVEL | RHYTHM | CUTOFF | PEAK |
+| RANGE MOTION 2/2 (HOME) | RANGE | MOTION | | |
 | VCO 1/2 (ENV) | NOISE | RANGE | | |
 | VCF VCA 2/2 (ENV) | CUTOFF | PEAK | LEVEL | EG |
 | LFO (LFO) | RATE | INT | TARGET | MODE |
@@ -72,7 +73,7 @@ the page on the screen. A switch moves one position for each click of the knob.
 | STEP 1/2 (SEQ) | TEMPO | SWING | STEPS | GATE |
 | EDIT 2/2 (SEQ) | STEP | NOTE | GATE | ON |
 | MIDI 1/3 (GLO) | SYNTH CH | DRUM CH | SYNC | CLOCK OUT |
-| GLOBAL 2/3 (GLO) | BLE MIDI | KEY LIGHT | GLOW | |
+| GLOBAL 2/3 (GLO) | BLE MIDI | KEY LIGHT | GLOW | PREVIEW |
 | DEVICES 3/3 (GLO) | DEVICE | | | |
 
 Three controls do the same job on every page:
@@ -89,7 +90,8 @@ Three controls do the same job on every page:
 | Setting | What it does |
 | --- | --- |
 | NOISE | White noise beside the oscillator, into the filter. |
-| RANGE | The ribbon's range: WIDE, NARROW or KEY. The keys play KEY (a semitone a key) for now; WIDE and NARROW are still to come. |
+| RANGE | The ribbon's range, on VCO and on HOME 2/2. On the monotribe, NARROW and WIDE make the ribbon slide continuously from note to note. The FM-1's keys are separate, so FMtribe slides with a glide instead: KEY jumps from note to note; NARROW glides fast (about 60 ms); WIDE glides slowly (about 300 ms). The glide happens when you play a key while still holding another, or when a sequenced note runs into the next; a fresh key after letting go starts on its own note. |
+| MOTION | MOTION VOLUME played back, on or off: see The sequencer. |
 | WAVE (SELECT) | The oscillator: saw, triangle or square. |
 | CUTOFF | The filter's cutoff, from about 80 Hz to about 18 kHz. |
 | PEAK | The filter's resonance. Near the top, the filter whistles on its own at the cutoff while a note plays. |
@@ -109,6 +111,7 @@ Three controls do the same job on every page:
 | BLE MIDI | Bluetooth MIDI on or off. |
 | KEY LIGHT | The keys' lights: OFF; HELD, the keys you hold; or GUIDE, those and the keys that do something special on the page you're on, such as the drum pads and the step LEDs. |
 | GLOW | How brightly the unlit buttons and the guide keys glow: OFF, LOW or HIGH. |
+| PREVIEW | DRUM PREVIEW, the monotribe's Global setting 6. ON (at first): the BD, SN and HH part keys play their drum as they pick it. OFF: they pick the part silently. |
 | DEVICE | On DEVICES, the Bluetooth MIDI device to connect to: see MIDI and audio. |
 
 | Button | What it does |
@@ -144,9 +147,9 @@ lights are the step LEDs. The black keys are the buttons beside them.
 | --- | --- | --- |
 | White keys F3 to F4 (the first eight) | Steps 1–8 | Switch the part's step on or off. A synth step switched on takes the last note you played. |
 | White keys G4 to G5 (the next eight) | Steps 9–16 | With 16-STEP SYNTH, the synth's steps 9 to 16. |
-| F♯3 · G♯3 · A♯3 | BD · SN · HH | Pick the part, and play its drum. Hold one and press a step for a hit half-way through that step. |
+| F♯3 · G♯3 · A♯3 | BD · SN · HH | Pick the part, and play its drum (with PREVIEW on). Hold one and press a step for a hit half-way through that step. |
 | C♯4 | SYNTH | Pick the synth part. PRESET picks the part too. |
-| D♯4 | ACTIVE STEP | Hold it and press steps to switch them on or off for playback. One step always stays on. |
+| D♯4 | ACTIVE STEP | Stopped, hold it and press steps to switch them on or off for playback; one step always stays on. While the pattern plays, hold it and touch the white keys for MOTION VOLUME. |
 | F♯4 | GATE TIME | Hold it and touch the white keys to set gate times; stopped, it's the multi-function key. See Setting gate times. |
 
 With KEY LIGHT on GUIDE, the white keys show the part, as the monotribe's step LEDs do:
@@ -176,7 +179,7 @@ When the sequencer is stopped, hold GATE TIME (F♯4) and press a step key, as o
 | 4 | INITIALIZE ACTIVE STEP: turns every part's steps back on. |
 | 5 | SAMPLE & HOLD: the LFO's WAVE to S&H, or back. |
 | 6 | 16-STEP SYNTH: on or off. |
-| 7 | GATE TIME HOLD: on or off. See Setting gate times. |
+| 7 | GATE TIME HOLD: on or off. Recording keeps the gates already recorded. See Setting gate times. |
 | 8 | HALF TEMPO: the sequencer at half the tempo shown, on or off. |
 
 #### EDIT: one step at a time
@@ -196,6 +199,20 @@ The box is the step cursor.
 | K2 NOTE | The synth step's note, a semitone a click. A drum shows -. |
 | K3 GATE | The synth step's gate time, from 1.4 % of the step to 100 %, then TIE. A drum shows -. |
 | K4 ON | Whether the step plays: for a drum, whether it hits. |
+
+#### MOTION VOLUME
+
+The monotribe Ver.2 can record the synth's volume into the pattern, step by step. FMtribe does it two ways:
+
+- **On the keys, the Ver.2 way.** While the pattern plays, hold ACTIVE STEP (D♯4) and touch the white keys: the
+  leftmost (F3) is silent and the rightmost (G5) full, with the keys between in even steps. You hear it at once. Let
+  go of ACTIVE STEP and the synth goes back to its recorded levels. With REC on, each synth step keeps the level it
+  plays with.
+- **With LEVEL.** With REC on and the pattern playing, turn LEVEL (K1 on HOME, or K3 on VCF VCA): each synth step
+  takes LEVEL's value as it passes.
+
+A step with a recorded level plays at that level instead of LEVEL; the others play at LEVEL. MOTION on HOME 2/2
+turns the recorded levels off and on without losing them. INITIALIZE SYNTH and INITIALIZE ALL clear them.
 
 #### Recording
 
@@ -230,9 +247,10 @@ that gate while you hold GATE TIME. Let go, and the notes go back to their own g
 plays, and keeps it. Touch other keys as the pattern goes round to give each step its own gate. Let go of GATE
 TIME, and press REC again to stop recording.
 
-**Hold it.** With the sequencer stopped, hold GATE TIME and press step 7 to turn GATE TIME HOLD on (GATE shows in the
-bottom line, and the GATE TIME key stays lit). Then the gate you set with GATE TIME stays after you let go, until
-you set another or turn GATE TIME HOLD off the same way.
+**Keep them while you re-record the notes.** With the sequencer stopped, hold GATE TIME and press step 7 to turn
+GATE TIME HOLD on, as on the monotribe Ver.2 (GATE shows in the bottom line, and the GATE TIME key stays lit). Now
+when you record new notes with REC, the steps keep the gate times already recorded, however long you hold each key;
+only the pitch changes. A step that had no note yet takes GATE from STEP. Turn GATE TIME HOLD off the same way.
 
 **Set one step exactly.** On EDIT, move the cursor to the step with SELECT and turn K3 GATE. It goes from 1.4 % to
 100 %, then TIE. New steps you switch on take the gate set by GATE on STEP.
