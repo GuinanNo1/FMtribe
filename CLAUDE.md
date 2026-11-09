@@ -42,22 +42,27 @@ halfband; Decay/Gate/Attack EGs; BD/SN/HH. `tests/host/tribe_test.c` checks each
 writes WAVs); `app/tests/sound.txt` covers the panel and MIDI map. Constants marked GUESS in tribe.c (Gate/Attack,
 release ~12 ms, SN tone/noise balance) wait for the prototype comparison. Known gap: self-oscillation level rises
 ~2.5 dB from 80 Hz to 18 kHz; the recordings suggest it falls ~6 dB from 200 Hz to 3.5 kHz.
-UI: pages on buttons (app.c PAGE[]): a button shows its first page, pressed again its next; K1–K4 edit the page;
-the header's top right shows x/y (page of that button's pages). SEL VCO VCF (CUTOFF PEAK WAVE NOISE), ENV EG VCA
-(EG LEVEL), LFO 1/2 (RATE INT TARGET MODE) and 2/2 (WAVE), ARP DRUMS (RHYTHM, BD/SN/HH DECAY; black keys F#-G#-A#
-groups are BD SN HH pads, glowing with KEY LIGHT GUIDE), GLO GLOBAL 1/3 MIDI (SYNTH CH, DRUM CH, SYNC INT/MIDI,
-CLOCK OUT), 2/3 (KEY LIGHT OFF/HELD/GUIDE, GLOW, BLE MIDI on/off). Settings are PAR[] (knob 0..127 or switch), saved as "FMT6" with the pattern. Lights via lights()
-(plat_lights: lit held keys, dim guide keys, mid for the playhead). PAR[] has lo/hi; pget/pset reach pattern-backed
-settings (STEPS, SEQ EDIT's STEP/NOTE/GATE/ON) and the BLE device pick, which are not in set.v (NSAVED).
-Sequencer (0.3): app/seq/seq.c (o2), tests/host/seq_test.c, app/tests/seq.txt. 8 steps x 2 slots, parts
+UI (0.4): pages on buttons (app.c PAGE[]), after the monotribe's panel left to right: a button shows its first page,
+pressed again its next; K1–K4 edit the page; the header's right shows the page name and x/y. ENV VCO 1/2 (NOISE
+RANGE; RANGE WIDE/NARROW/KEY stored, only KEY plays yet) and VCF VCA 2/2 (CUTOFF PEAK LEVEL EG); LFO (RATE INT TARGET
+MODE); ARP DRUMS (RHYTHM, BD/SN/HH DECAY; F#-G#-A# black keys are pads); SEQ STEP 1/2 (TEMPO SWING STEPS GATE) and
+EDIT 2/2 (STEP NOTE GATE ON, piano roll); GLO MIDI 1/3 (SYNTH CH DRUM CH SYNC CLOCK OUT), GLOBAL 2/3 (BLE MIDI, KEY
+LIGHT, GLOW), DEVICES 3/3 (K1 picks, SAVE connects/lets go; scans while the page is up). Constant everywhere: OCT-/+
+the octave; SELECT the VCO WAVE (on SEQ pages the step cursor ed_slot); ALGO the LFO WAVE on LFO. SEL, EDIT, HOME,
+FX, PRESET free (the user will assign SEL later). Settings are PAR[] (knob 0..127 or switch), saved as "FMT7" with
+the pattern. pget/pset reach pattern-backed settings (STEPS, EDIT's STEP/NOTE/GATE/ON) and the BLE device pick (NSAVED).
+Sequencer (0.3, UI 0.4): app/seq/seq.c (o2), tests/host/seq_test.c, app/tests/seq.txt. 8 steps x 2 slots, parts
 SYNTH/BD/SN/HH, per-part active steps, gate per synth slot (127 tie), 16-step synth, swing, 96 ppqn ticks in the
 audio interrupt (app_render splits the block at ticks and sample-timed note offs), MIDI clock in (SYNC MIDI, 4 ticks
-a clock) and out. SEQ 1/3 TEMPO PART GATE SWING (white keys = part's 16 slots, black F#3 G#3 A#3 C#4 = BD SN HH
-SYNTH), SEQ STEPS 2/3 STEPS - - PART (white 1-8 active steps, black F#3 G#3 A#3 C#4 clear all / synth /
-drums / reset active), SEQ EDIT 3/3 STEP NOTE GATE ON (keys write notes, cursor advances). PLAY start/stop (green,
-red recording); REC arms; armed, keys play+record synth on any page, DRUMS pads record drums. Pattern in settings.
-BLE devices: GLOBAL DEVICES 3/3 (K1 picks, SAVE connects/lets go; scans while the page is up).
-SELECT/ALGO/PRESET free. Not yet: Flux, drum rolls, volume automation, ribbon modes, gate-time hold.
+a clock) and out; seq_gate_live (GATE TIME). STEP is the monotribe's step row on the keys: white keys 1-8 (9-16 with
+16-STEP SYNTH) are the step buttons and their lights the step LEDs (off: inactive/past 8; dim: active, empty; mid:
+note/hit; lit: playhead, or the synth cursor when stopped). Black: F#3 G#3 A#3 C#4 = BD SN HH SYNTH (hold a drum's
+key + step = half-step), D#4 ACTIVE STEP (hold + steps), F#4 GATE TIME: held while playing, white keys are a ribbon
+(left 1.4 %, right 127/tie), recorded into each synth step with REC; held while stopped, the v2 multi-function key
+(steps 1-4 INITIALIZE ALL/SYNTH/RHYTHM/ACTIVE, 5 S&H, 6 16-STEP SYNTH, 7 GATE TIME HOLD, 8 HALF TEMPO). REC arms;
+armed, keys play+record synth on any page (on STEP the white keys), DRUMS pads record drums. Manual section 4
+"Setting gate times" documents the gate methods. Manual screenshots: app/tests/screens.txt -> app/docs/img.
+Not yet: Flux, drum rolls, volume automation, ribbon modes (RANGE WIDE/NARROW).
 LFO (0.3): tribe.c, rates from the manual; depth (±1 oct pitch, ±3 oct cutoff), INT square-law taper, 1SHOT on the
 SLOW range and the falling saw are GUESSES.
 Next: user testing in the emulator; then Flux (continuous synth recording), drum rolls, ribbon modes.

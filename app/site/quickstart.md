@@ -22,35 +22,38 @@ To go back to M-VAVE's firmware, or to another one, open the same installer and 
 ## 3. Play
 
 Press a page button, then turn K1 to K4 to edit that page. Press the button again for its next page; the top right of
-the screen shows which one, such as 1/2.
+the screen shows which one, such as VCF VCA 2/2.
 
 | Page (button) | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
-| VCO VCF (SEL) | CUTOFF | PEAK | WAVE | NOISE |
-| EG VCA (ENV) | EG | LEVEL | | |
-| LFO 1/2 (LFO) | RATE | INT | TARGET | MODE |
-| LFO 2/2 (LFO) | WAVE | | | |
+| VCO 1/2 (ENV) | NOISE | RANGE | | |
+| VCF VCA 2/2 (ENV) | CUTOFF | PEAK | LEVEL | EG |
+| LFO (LFO) | RATE | INT | TARGET | MODE |
 | DRUMS (ARP) | RHYTHM | BD DECAY | SN DECAY | HH DECAY |
-| SEQ 1/3 (SEQ) | TEMPO | PART | GATE | SWING |
-| SEQ STEPS 2/3 (SEQ) | STEPS | | | PART |
-| SEQ EDIT 3/3 (SEQ) | STEP | NOTE | GATE | ON |
-| GLOBAL 1/3 (GLO) | SYNTH CH | DRUM CH | SYNC | CLOCK OUT |
-| GLOBAL 2/3 (GLO) | KEY LIGHT | GLOW | BLE MIDI | |
+| STEP 1/2 (SEQ) | TEMPO | SWING | STEPS | GATE |
+| EDIT 2/2 (SEQ) | STEP | NOTE | GATE | ON |
+| MIDI 1/3 (GLO) | SYNTH CH | DRUM CH | SYNC | CLOCK OUT |
+| GLOBAL 2/3 (GLO) | BLE MIDI | KEY LIGHT | GLOW | |
 | DEVICES 3/3 (GLO) | DEVICE | | | |
+
+On every page, OCT− and OCT+ set the octave and SELECT the VCO's wave (on SEQ, it moves the step cursor). On LFO,
+ALGO sets the LFO's wave.
 
 | Do this | And |
 | --- | --- |
 | Play the keys | The synth sounds. Each new key starts its envelope again. |
 | On DRUMS (ARP), the F♯ G♯ A♯ black keys | Bass drum, snare, hi-hat. The white keys still play the synth. |
-| OCT− · OCT+ | Octave down or up. |
 | PLAY | Start or stop the pattern. |
 | REC, then PLAY | Record: the keys (and the DRUMS pads) land on the nearest step. |
-
-**A drum pattern in a minute:** press SEQ. Press F♯3 to pick the bass drum, and press white keys to switch its
-slots on: each white key is a step or the half of one, low to high. G♯3 picks the snare and A♯3 the hi-hat, C♯4
-the synth. Press PLAY.
 | Turn MASTER | Volume. |
 | SAVE | Keeps your settings for the next start (it lights when there's something to save). |
+
+**A drum pattern in a minute:** press SEQ. On STEP the keys are the monotribe's step row: the first eight white keys
+are steps 1–8, and their lights are the step LEDs. Press F♯3 to pick the bass drum and press white keys to switch
+its steps on. G♯3 picks the snare, A♯3 the hi-hat and C♯4 the synth. Press PLAY.
+
+**Gate times:** while it plays, hold F♯4 (GATE TIME) and touch the white keys: left is short, right is long. The
+manual's "Setting gate times" has the rest.
 
 ## 4. Connect
 
@@ -64,7 +67,7 @@ the synth. Press PLAY.
 
 ## 5. If something goes wrong
 
-- **No sound:** turn MASTER up, LEVEL (ENV page) and CUTOFF (SEL page). A DECAY note fades after about a second; set EG to GATE on the ENV page for held notes.
+- **No sound:** turn MASTER up, and LEVEL and CUTOFF (VCF VCA, ENV 2/2). A DECAY note fades after about a second; set EG to GATE there for held notes.
 - **The installer can't find the FM-1:** close other programs using its MIDI port, try another cable (some are
   charge-only), and allow MIDI in the browser.
 - **The FM-1 doesn't start after an install:** after two failed starts it opens in SAFE MODE, where the installer

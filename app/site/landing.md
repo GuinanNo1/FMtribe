@@ -4,7 +4,7 @@ FMtribe is open-source firmware for the M-VAVE FM-1 that recreates the sound and
 analogue groove box: one VCO, a two-pole MS-style filter, an LFO, three analogue-style drums and an eight-step
 sequencer. It's a clean-room recreation, written from scratch.
 
-![FMtribe while a key is held](manual/img/screen-playing.png "FMtribe on the FM-1's screen")
+![FMtribe's STEP page: the pattern, a row a part](manual/img/screen-step.png "FMtribe on the FM-1's screen")
 
 This is version {{VERSION}}, an early development build. You install it at your own risk, and the installer can put
 M-VAVE's own firmware back.

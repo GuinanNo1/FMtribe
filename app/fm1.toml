@@ -23,4 +23,4 @@ description = "A clean-room recreation of the sound and controls of a classic mo
 tags = ["synth", "groovebox", "sequencer", "drum-machine"]
 install = "https://guinanno1.github.io/FMtribe/install/"
 site = "https://guinanno1.github.io/FMtribe/"
-screenshot = "app/docs/img/screen-playing.png"
+screenshot = "app/docs/img/screen-step.png"

@@ -1,7 +1,7 @@
 # FMtribe
 
 FMtribe will recreate the sound and controls of a classic monophonic analogue groove box on the M-VAVE FM-1. This
-build has the synth voice, the LFO, the drums and the step sequencer: one oscillator (saw, triangle or square) and
+build has the synth voice, the LFO, the drums and the step sequencer, with the monotribe's step row on the keys: one oscillator (saw, triangle or square) and
 noise into a two-pole MS-style low-pass filter that self-oscillates, a VCA with three fixed envelopes, an LFO on
 the pitch, the filter or both, a bass drum, snare and hi-hat, and an 8-step sequencer for all four parts. The
 ribbon modes, Flux recording and drum rolls come next. The sound is fitted to recordings of real units, so treat
@@ -16,11 +16,12 @@ it as an estimate until it has been compared side by side with one.
 1. Install
 2. The screen
 3. Controls
-4. Saving
-5. MIDI and audio
-6. The screen mirror
-7. The screen reader
-8. Troubleshooting
+4. Setting gate times
+5. Saving
+6. MIDI and audio
+7. The screen mirror
+8. The screen reader
+9. Troubleshooting
 
 ---
 
@@ -41,128 +42,211 @@ can recover an FM-1 that doesn't start, too. For details, see felucca-bsp's `too
 
 ## 2. The screen
 
-![The SEQ page: TEMPO 120, PART SYNTH, GATE 64, SWING 50 %, and the pattern, a row a part](img/screen-playing.png "The SEQ page")
+![ENV 2/2, the VCF VCA page: CUTOFF 80, PEAK 30, LEVEL 100, EG DECAY, and the VCO's WAVE on SELECT](img/screen-ready.png "The VCF VCA page")
 
 | Part | What it shows |
 | --- | --- |
-| Header | The name, and BLE, which lights while a computer or tablet is connected over Bluetooth. While you play a key, it shows the note. After a change, a message shows here for a moment, such as CUTOFF 100. At the top right, which page of its button you're on, such as 1/2. |
-| Tabs | The pages' buttons: VCF (SEL), EG (ENV), LFO, DRUM (ARP), SEQ and GLO. The one you're on is lit, and so is its button. |
-| K1 to K4 | What the four knobs do on this page. A knob shows a bar and a value from 0 to 127; a switch shows its position. Each lights for a moment as you turn it. |
-| Drums | The BD, SN and HH pads, with the black keys that play them on the DRUMS page. A pad lights as its drum plays. On the SEQ pages, the pattern instead. |
+| Header | The name, and BLE, which lights while a computer or tablet is connected over Bluetooth. At the right, the page's name and which page of its button you're on, such as VCF VCA 2/2. While you play a key, the note instead. After a change, a message shows here for a moment, such as CUTOFF 100. |
+| Tabs | The pages' buttons: VCO (ENV), LFO, DRUM (ARP), SEQ and GLO. The one you're on is lit, and so is its button. |
+| K1 to K4 | What the four knobs do on this page. A knob shows a bar and its value; a switch shows its position. Each lights for a moment as you turn it. |
+| Below the knobs | On the synth pages, the VCO's WAVE (SELECT) and, on LFO, the LFO's WAVE (ALGO). On DRUMS, the pads. On STEP, the pattern, a row a part. On EDIT, the synth's steps as a piano roll. |
 | Keys | The 27 keys, black above white. A held key fills up. |
-| Bottom line | The octave, PLAY or STOP and the tempo (REC when armed), the last MIDI message in, and the volume (MASTER). |
+| Bottom line | The octave, PLAY or STOP and the tempo (/2 with HALF TEMPO, REC when armed, GATE with GATE TIME HOLD), the last MIDI message in, and the volume (MASTER). |
 
 ---
 
 ## 3. Controls
 
-The four knobs K1 to K4 edit the page on the screen. A page's button shows it; press the button again for its next
-page, if it has more than one. A switch moves one position for each click of the knob.
+The pages follow the monotribe's panel from left to right: the VCO and VCF on ENV, then the LFO, then the drums and
+the sequencer. A page's button shows it; press the button again for its next page. The four knobs K1 to K4 edit
+the page on the screen. A switch moves one position for each click of the knob.
 
 | Page (button) | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
-| VCO VCF (SEL) | CUTOFF | PEAK | WAVE | NOISE |
-| EG VCA (ENV) | EG | LEVEL | | |
-| LFO 1/2 (LFO) | RATE | INT | TARGET | MODE |
-| LFO 2/2 (LFO) | WAVE | | | |
+| VCO 1/2 (ENV) | NOISE | RANGE | | |
+| VCF VCA 2/2 (ENV) | CUTOFF | PEAK | LEVEL | EG |
+| LFO (LFO) | RATE | INT | TARGET | MODE |
 | DRUMS (ARP) | RHYTHM | BD DECAY | SN DECAY | HH DECAY |
-| SEQ 1/3 (SEQ) | TEMPO | PART | GATE | SWING |
-| SEQ STEPS 2/3 (SEQ) | STEPS | | | PART |
-| SEQ EDIT 3/3 (SEQ) | STEP | NOTE | GATE | ON |
-| GLOBAL 1/3 (GLO) | SYNTH CH | DRUM CH | SYNC | CLOCK OUT |
-| GLOBAL 2/3 (GLO) | KEY LIGHT | GLOW | BLE MIDI | |
+| STEP 1/2 (SEQ) | TEMPO | SWING | STEPS | GATE |
+| EDIT 2/2 (SEQ) | STEP | NOTE | GATE | ON |
+| MIDI 1/3 (GLO) | SYNTH CH | DRUM CH | SYNC | CLOCK OUT |
+| GLOBAL 2/3 (GLO) | BLE MIDI | KEY LIGHT | GLOW | |
 | DEVICES 3/3 (GLO) | DEVICE | | | |
 
-### The sequencer
+Three controls do the same job on every page:
 
-FMtribe plays one pattern of 8 steps, a 16th note each, for four parts: SYNTH, BD, SN and HH, as the monotribe
-does. Each step has a second slot half-way through it, for the drums' in-between hits and, with STEPS on 16, the
-synth's in-between notes. Each part has its own active steps, so a part with fewer steps cycles against the others.
+| Control | What it does |
+| --- | --- |
+| OCT− · OCT+ | The octave, in six steps from −3 to +2, as the monotribe's six octave positions. |
+| SELECT | The VCO's WAVE: saw, triangle or square. On the SEQ pages, it moves the step cursor instead. |
+| ALGO | On the LFO page, the LFO's WAVE: saw, triangle, square or S&H. |
 
-PLAY starts the pattern from step 1 and stops it. PLAY lights green while it plays, red while it records.
-
-On the SEQ pages the keys change job:
-
-| Page | White keys | Black keys |
-| --- | --- | --- |
-| SEQ 1/3 | The part's 16 slots, low to high: step 1, its half, step 2, its half... A key switches its slot on or off. A synth step switched on takes the last note you played on the keys. | F♯3, G♯3 and A♯3 pick BD, SN and HH (and play them), C♯4 picks SYNTH. |
-| SEQ STEPS 2/3 | The lowest eight: the part's active steps, on or off. One always stays on. | F♯3 clears everything, G♯3 the synth, A♯3 the drums; C♯4 turns every part's steps back on. |
-| SEQ EDIT 3/3 | Play a note to put it in the step shown (K1), which then moves on to the next step. | Play notes too. |
-
-With KEY LIGHT on GUIDE (GLOBAL 2/3), the keys show the pattern: on SEQ 1/3 a slot that plays is lit, an empty
-slot in an active step glows, and the step playing shows half-lit; on SEQ STEPS the active steps are lit. The
-screen shows the whole pattern, a row a part, with the playhead in white.
-
-To record, press REC (it lights), then PLAY. While REC is on, the keys play and record the synth on any page,
-landing on the nearest step (or half-step in 16-step mode), and how long you hold a note sets its gate time; on
-the DRUMS page the pads record the drums. Recording adds to the pattern; to start again, clear a part on SEQ
-STEPS. Press REC again to stop recording.
+![The VCO page, ENV 1/2](img/screen-vco.png "The VCO page") ![The LFO page](img/screen-lfo.png "The LFO page")
 
 | Setting | What it does |
 | --- | --- |
-| TEMPO | 10 to 600 BPM. |
-| PART | The part the keys and the active steps edit. |
-| GATE | The gate time a new synth step gets, from 1.4 % of the step to 100 % (TIE: the note runs into the next). |
-| SWING | Plays every second step later, from straight (50 %) to a triplet feel (67 %). |
-| STEPS | 8, or 16: the synth's half-steps play too. |
+| NOISE | White noise beside the oscillator, into the filter. |
+| RANGE | The ribbon's range: WIDE, NARROW or KEY. The keys play KEY (a semitone a key) for now; WIDE and NARROW are still to come. |
+| WAVE (SELECT) | The oscillator: saw, triangle or square. |
+| CUTOFF | The filter's cutoff, from about 80 Hz to about 18 kHz. |
+| PEAK | The filter's resonance. Near the top, the filter whistles on its own at the cutoff while a note plays. |
+| LEVEL | The synth's volume. |
+| EG | The envelope. DECAY jumps to full when a note starts and dies away over about 1.3 seconds, even while you hold the key. GATE stays full while you hold it. ATTACK rises over about 1.3 seconds while you hold it. All three close quickly when you let go. |
+| RATE | The LFO's speed: about 1 Hz to 5 kHz in FAST, 0.05 Hz to 18 Hz in SLOW and 1 SHOT. |
+| INT | How much the LFO moves the pitch or the filter, from none at 0. At the top, the pitch swings an octave either way and the cutoff three octaves. |
+| TARGET | What the LFO moves: VCO (the pitch), VCO+VCF (both) or VCF (the cutoff). |
+| MODE | FAST and SLOW run all the time. FAST and 1 SHOT start again with each new note. 1 SHOT plays half a cycle when a note starts and then stops, like a second envelope. |
+| WAVE (ALGO) | The LFO: saw (falling), triangle, square, or S&H, a new random level each cycle. |
+| RHYTHM | The drums' volume. |
+| BD DECAY · SN DECAY · HH DECAY | Each drum's decay, as the popular hardware decay mods give it. 32 is the stock decay; lower is shorter, higher is up to about 15 times as long. |
+| SYNTH CH | The MIDI channel the synth plays on and the keys send on, 1 to 16 (1 at first). |
+| DRUM CH | The MIDI channel the drums play on and send on, 1 to 16 (10 at first). |
 | SYNC | INT runs at TEMPO; MIDI follows MIDI clock, start and stop from a computer or another instrument. |
 | CLOCK OUT | Sends MIDI clock, start and stop, so other gear follows FMtribe. |
-| STEP · NOTE · GATE · ON | SEQ EDIT: pick a step (or half-step) of the synth, and set its note, gate time and whether it plays. |
+| BLE MIDI | Bluetooth MIDI on or off. |
+| KEY LIGHT | The keys' lights: OFF; HELD, the keys you hold; or GUIDE, those and the keys that do something special on the page you're on, such as the drum pads and the step LEDs. |
+| GLOW | How brightly the unlit buttons and the guide keys glow: OFF, LOW or HIGH. |
+| DEVICE | On DEVICES, the Bluetooth MIDI device to connect to: see MIDI and audio. |
 
-The pattern is kept with the settings when you press SAVE.
+| Button | What it does |
+| --- | --- |
+| Keys | Play the synth. The last key you pressed sounds, and each new key starts the envelope again, as the monotribe's ribbon does. Let go of it while holding another, and the pitch goes back to the one still held. The volume doesn't follow how hard you play, as on the monotribe. Each key also sends its note on the synth's channel. On STEP, the keys are the sequencer's buttons instead. |
+| MASTER | Sets the volume. |
+| SAVE | Saves every setting, the octave and the pattern. SAVE lights while there's something to save. On the DEVICES page, SAVE connects to a Bluetooth MIDI device instead. |
+| PLAY · REC | Start and stop the sequencer; record into it. See The sequencer. |
+| SEL · EDIT · HOME · FX | Show their names, and do nothing else yet. |
 
+### The drums
 
 On the DRUMS page, the black keys in the two F♯–G♯–A♯ groups play the bass drum, snare and hi-hat, and glow to
 show it (KEY LIGHT on GUIDE). The white keys still play the synth, so you can play both. The other black keys do
 nothing there.
 
-| Setting | What it does |
-| --- | --- |
-| CUTOFF | The filter's cutoff, from about 80 Hz to about 18 kHz. |
-| PEAK | The filter's resonance. Near the top, the filter whistles on its own at the cutoff while a note plays. |
-| WAVE | The oscillator: saw, triangle or square. |
-| NOISE | White noise beside the oscillator, into the filter. |
-| EG | The envelope. DECAY jumps to full when a note starts and dies away over about 1.3 seconds, even while you hold the key. GATE stays full while you hold it. ATTACK rises over about 1.3 seconds while you hold it. All three close quickly when you let go. |
-| LEVEL | The synth's volume. |
-| RHYTHM | The drums' volume. |
-| BD DECAY · SN DECAY · HH DECAY | Each drum's decay, as the popular hardware decay mods give it. 32 is the stock decay; lower is shorter, higher is up to about 15 times as long. |
-| RATE | The LFO's speed: about 1 Hz to 5 kHz in FAST, 0.05 Hz to 18 Hz in SLOW and 1 SHOT. |
-| INT | How much the LFO moves the pitch or the filter, from none at 0. At the top, the pitch swings an octave either way and the cutoff three octaves. |
-| TARGET | What the LFO moves: VCO (the pitch), VCO+VCF (both) or VCF (the cutoff). |
-| MODE | FAST and SLOW run all the time. FAST and 1 SHOT start again with each new note. 1 SHOT plays half a cycle when a note starts and then stops, like a second envelope. |
-| WAVE (LFO) | Saw (falling), triangle, square, or S&H, a new random level each cycle. |
-| SYNTH CH | The MIDI channel the synth plays on and the keys send on, 1 to 16 (1 at first). |
-| DRUM CH | The MIDI channel the drums play on and send on, 1 to 16 (10 at first). |
-| BLE MIDI | Bluetooth MIDI on or off. |
-| DEVICE | On DEVICES, the Bluetooth MIDI device to connect to: see MIDI and audio. |
-| KEY LIGHT | The keys' lights: OFF; HELD, the keys you hold; or GUIDE, those and, dimly, the keys that do something special on the page you're on, such as the drum pads. |
-| GLOW | How brightly the unlit buttons and the guide keys glow: OFF, LOW or HIGH. |
+### The sequencer
 
-| Button | What it does |
+FMtribe plays one pattern of 8 steps, a 16th note each, for four parts: SYNTH, BD, SN and HH, as the monotribe
+does. Each step has a second slot half-way through it, for the drums' in-between hits and, with 16-STEP SYNTH, the
+synth's in-between notes. Each part has its own active steps, so a part with fewer steps cycles against the others.
+
+PLAY starts the pattern from step 1 and stops it. PLAY lights green while it plays, red while it records.
+
+#### STEP: the monotribe's step row, on the keys
+
+![STEP: the pattern, a row a part, with the step cursor under the synth's row](img/screen-step.png "The STEP page")
+
+On STEP (SEQ, 1/2), the keys become the monotribe's row of buttons. The white keys are the step buttons, and their
+lights are the step LEDs. The black keys are the buttons beside them.
+
+| Key | Monotribe button | What it does |
+| --- | --- | --- |
+| White keys F3 to F4 (the first eight) | Steps 1–8 | Switch the part's step on or off. A synth step switched on takes the last note you played. |
+| White keys G4 to G5 (the next eight) | Steps 9–16 | With 16-STEP SYNTH, the synth's steps 9 to 16. |
+| F♯3 · G♯3 · A♯3 | BD · SN · HH | Pick the part, and play its drum. Hold one and press a step for a hit half-way through that step. |
+| C♯4 | SYNTH | Pick the synth part. |
+| D♯4 | ACTIVE STEP | Hold it and press steps to switch them on or off for playback. One step always stays on. |
+| F♯4 | GATE TIME | Hold it and touch the white keys to set gate times; stopped, it's the multi-function key. See Setting gate times. |
+
+With KEY LIGHT on GUIDE, the white keys show the part, as the monotribe's step LEDs do:
+
+| Light | Meaning |
 | --- | --- |
-| Keys | Play the synth. The last key you pressed sounds, and each new key starts the envelope again, as the monotribe's ribbon does. Let go of it while holding another, and the pitch goes back to the one still held. The volume doesn't follow how hard you play, as on the monotribe. Each key also sends its note on the synth's channel. |
-| OCT− · OCT+ | Set the octave, in six steps from −3 to +2, as the monotribe's six octave positions. |
-| MASTER | Sets the volume. |
-| SAVE | Saves every setting, the octave and the pattern. SAVE lights while there's something to save. On the DEVICES page, SAVE connects to a Bluetooth MIDI device instead. |
-| PLAY · REC | Start and stop the sequencer; record into it. See The sequencer. |
-| EDIT · HOME · FX | Show their names, and do nothing else yet. |
+| Off | A step that doesn't play: switched off with ACTIVE STEP, or past step 8 (unless 16-STEP SYNTH is on). |
+| Dim | An active step with nothing on it. |
+| Half-lit | A step with a note or a hit. |
+| Lit | The step playing now. Stopped, on the synth part, the step cursor. |
+
+While you hold ACTIVE STEP, the active steps are lit instead. The part keys glow, with the part you're editing lit.
+ACTIVE STEP and GATE TIME glow; GATE TIME stays lit while GATE TIME HOLD is on.
+
+The knobs on STEP set TEMPO (10 to 600 BPM), SWING (every second step later, from straight, 50 %, to a triplet
+feel, 67 %), STEPS (8 or 16, the same as 16-STEP SYNTH) and GATE, the gate time a new synth step gets.
+
+#### The multi-function key
+
+When the sequencer is stopped, hold GATE TIME (F♯4) and press a step key, as on the monotribe Ver.2:
+
+| Step | Function |
+| --- | --- |
+| 1 | INITIALIZE ALL: clears the whole pattern. |
+| 2 | INITIALIZE SYNTH: clears the synth part. |
+| 3 | INITIALIZE RHYTHM: clears the drums. |
+| 4 | INITIALIZE ACTIVE STEP: turns every part's steps back on. |
+| 5 | SAMPLE & HOLD: the LFO's WAVE to S&H, or back. |
+| 6 | 16-STEP SYNTH: on or off. |
+| 7 | GATE TIME HOLD: on or off. See Setting gate times. |
+| 8 | HALF TEMPO: the sequencer at half the tempo shown, on or off. |
+
+#### EDIT: one step at a time
+
+![EDIT: the synth's steps as a piano roll, the cursor on step 1](img/screen-edit.png "The EDIT page")
+
+EDIT (SEQ, 2/2) sets the synth's steps exactly, which the monotribe can only do by playing them in. The screen shows
+the synth's steps as a piano roll: each note at its pitch, as long as its gate. The box is the step cursor.
+
+| Control | What it does |
+| --- | --- |
+| SELECT or K1 STEP | Moves the cursor a step at a time (a half-step with 16-STEP SYNTH). |
+| Keys | Play a note to put it in the cursor's step and switch that step on. The cursor moves on to the next step, so you can type in a melody. |
+| K2 NOTE | The step's note, a semitone a click. |
+| K3 GATE | The step's gate time, from 1.4 % of the step to 100 %, then TIE. |
+| K4 ON | Whether the step plays. |
+
+#### Recording
+
+To record, press REC (it lights), then PLAY. While REC is on, the keys play and record the synth on any page,
+landing on the nearest step (or half-step with 16-STEP SYNTH), and how long you hold a note sets its gate time. On
+the DRUMS page the pads record the drums. Recording adds to the pattern; to start again, use INITIALIZE. Press REC
+again to stop recording.
+
+The pattern is kept with the settings when you press SAVE.
 
 ---
 
-## 4. Saving
+## 4. Setting gate times
+
+The gate time is how long each synth note sounds, as a share of its step. At 1.4 % a note is a short blip; at 100 %
+it fills its step. TIE, set on EDIT, lets a note run on into the next one without a new attack.
+
+```
+   1.4 %          50 %                 100 %
+  |▌      |      |████    |           |████████|
+   step 1          step 2               step 3
+```
+
+There are three ways to set it.
+
+**Play it live, the monotribe way.** On STEP, while the pattern plays, hold GATE TIME (F♯4) and touch the white
+keys. They work as the monotribe's ribbon does with its GATE TIME button: the leftmost white key (F3) is the
+shortest gate, 1.4 %, and the rightmost (G5) is 100 %, where each note runs into the next, with the keys between in even steps. Every synth note takes
+that gate while you hold GATE TIME. Let go, and the notes go back to their own gates. Nothing is stored.
+
+**Record it.** Press REC, then PLAY. Hold GATE TIME and touch a white key: each synth step takes that gate as it
+plays, and keeps it. Touch other keys as the pattern goes round to give each step its own gate. Let go of GATE
+TIME, and press REC again to stop recording.
+
+**Hold it.** With the sequencer stopped, hold GATE TIME and press step 7 to turn GATE TIME HOLD on (GATE shows in the
+bottom line, and the GATE TIME key stays lit). Then the gate you set with GATE TIME stays after you let go, until
+you set another or turn GATE TIME HOLD off the same way.
+
+**Set one step exactly.** On EDIT, move the cursor to the step with SELECT and turn K3 GATE. It goes from 1.4 % to
+100 %, then TIE. New steps you switch on take the gate set by GATE on STEP.
+
+---
+
+## 5. Saving
 
 Press SAVE to keep every setting, the octave and whether Bluetooth is on. They come back the
 next time the FM-1 starts. SAVE stays lit while there are changes to save. Settings saved by an earlier FMtribe
 don't carry over, since this version keeps more of them.
 
-![GLOBAL 2/2: KEY LIGHT GUIDE, GLOW LOW](img/screen-settings.png "The second GLOBAL page")
+![MIDI, GLOBAL 1/3: SYNTH CH 1, DRUM CH 10, SYNC INT, CLOCK OUT ON](img/screen-settings.png "The MIDI page")
 
 ---
 
-## 5. MIDI and audio
+## 6. MIDI and audio
 
-MIDI comes in over USB, Bluetooth and the TRS jack, on the monotribe's own map. The channels are set on the GLOBAL
-page; at first the synth is on 1 and the drums on 10.
+MIDI comes in over USB, Bluetooth and the TRS jack, on the monotribe's own map. The channels are set on the MIDI
+page (GLO, 1/3); at first the synth is on 1 and the drums on 10.
 
 | Message | What it does |
 | --- | --- |
@@ -175,7 +259,7 @@ page; at first the synth is on 1 and the drums on 10.
 | CC 82 | LFO MODE: 32 FAST, 64 SLOW, 96 1 SHOT. |
 | CC 83 | LFO WAVE: 32 saw, 64 triangle, 96 square, 127 S&H. |
 | CC 7 | LEVEL. |
-| Clock, start, stop | With SYNC on MIDI (GLOBAL 1/3), the sequencer follows them. |
+| Clock, start, stop | With SYNC on MIDI (MIDI, GLO 1/3), the sequencer follows them. |
 
 The CCs are read on the synth's channel. The sequencer sends its notes out too, on the same channels, and MIDI
 clock, start and stop with CLOCK OUT on. The keys send notes, with their velocity and poly aftertouch, out over USB
@@ -203,7 +287,7 @@ the FM-1's speaker and headphones, mixed with the FM-1's own sound, at MASTER's 
 
 ---
 
-## 6. The screen mirror
+## 7. The screen mirror
 
 The site's [Mirror](../mirror/) page shows the FM-1's screen and panel live on your computer, in Chrome or Edge,
 over the USB cable. Press Connect and allow MIDI. Press Control to play the FM-1 from the page: click its buttons
@@ -211,7 +295,7 @@ and keys, and scroll over a knob to turn it. Close other programs that use the F
 
 ---
 
-## 7. The screen reader
+## 8. The screen reader
 
 FMtribe tells a screen reader what's on its screen, through the
 [FM-1 Screen Reader](https://charlesvestal.github.io/fm1-reader/). When the reader starts listening, it hears the
@@ -220,11 +304,11 @@ reader or with its built-in voice.
 
 ---
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 If you hear no sound, turn MASTER and LEVEL up, and CUTOFF too: with CUTOFF low and PEAK low, the filter lets
 little through. With the DECAY envelope, a note dies away after about a second even while you hold the key; on the
-EG VCA page (ENV), set EG to GATE for a note that lasts. For the drums, turn RHYTHM up on the DRUMS page (ARP). If the
+VCF VCA page (ENV, 2/2), set EG to GATE for a note that lasts. For the drums, turn RHYTHM up on the DRUMS page (ARP). If the
 pitch wobbles, turn INT down on the LFO page.
 
 If the installer doesn't find the FM-1, use Chrome or Edge, and allow MIDI when the browser asks. Close any other

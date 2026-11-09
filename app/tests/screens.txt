@@ -2,15 +2,50 @@
 #   app/build/host/fmtribe_host app/tests/screens.txt app/docs/img
 wait 900
 shot screen-ready.png
-key 7 down 90 50
-press FX
-turn K3 3
+# ENV 1/2 VCO, LFO
+tap ENV
 wait 1400
-shot screen-playing.png
-release FX
-key 7 up
-tap OCT+
+shot screen-vco.png
+tap LFO
+wait 1400
+shot screen-lfo.png
+# a pattern: C4 E4 G4 A4 typed into steps 1-4 on EDIT, then BD on the quarters and HH on every step from STEP
+tap SEQ
+tap SEQ
 wait 30
-turn PRESET 1
+tapkey 7
+tapkey 11
+tapkey 14
+tapkey 16
+tap SEQ
 wait 30
+key 1 down
+wait 30
+key 1 up
+tapkey 0
+tapkey 4
+tapkey 7
+tapkey 11
+key 5 down
+wait 30
+key 5 up
+tapkey 0
+tapkey 2
+tapkey 4
+tapkey 6
+tapkey 7
+tapkey 9
+tapkey 11
+tapkey 12
+key 8 down
+wait 30
+key 8 up
+wait 1400
+shot screen-step.png
+tap SEQ
+turn SELECT -4
+wait 1400
+shot screen-edit.png
+tap GLO
+wait 1400
 shot screen-settings.png

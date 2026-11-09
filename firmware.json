@@ -10,7 +10,7 @@
   "install": "https://guinanno1.github.io/FMtribe/install/",
   "site": "https://guinanno1.github.io/FMtribe/",
   "source": "https://github.com/GuinanNo1/FMtribe",
-  "screenshot": "app/docs/img/screen-playing.png",
+  "screenshot": "app/docs/img/screen-step.png",
   "hardware": {
     "models": ["FM-1"],
     "flash": ["856014", "B36014"],

@@ -128,6 +128,20 @@ int main(void)
     run(10);
     CHECK(count('O', -1, 0, 1u << 30) >= 2 && seq_step(0) == -1, "stop: the note off, the parts at rest");
 
+    printf("GATE TIME live\n");
+    fresh();
+    P.on[SEQ_SYNTH] = 1u;
+    P.note[0] = 48; P.gate[0] = 0;
+    seq_gate_live(63);
+    seq_play(1);
+    run((uint32_t)(step * 2));
+    a = nth('N', 48, 0);
+    b = nth('O', -1, 0);
+    CHECK(a >= 0 && b > a && fabs((ev[b].t - ev[a].t) / step - 0.507) < 0.03, "live gate 63 over the step's 0: %.3f (0.507)", (ev[b].t - ev[a].t) / step);
+    seq_gate_live(-1);
+    seq_play(0);
+    run(10);
+
     printf("Swing\n");
     fresh();
     P.on[SEQ_BD] = 0x5555u;

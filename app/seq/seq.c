@@ -9,6 +9,7 @@
 static seq_pattern_t *pat;
 static volatile uint8_t playing, req;            /* req: 1 play (from step 1), 2 stop, 3 continue: taken by the render */
 static volatile uint8_t ext, clk_out;
+static volatile int16_t gate_live = -1;          /* GATE TIME held: the gate every synth note gets (-1 none) */
 static volatile float spt = 44100.0f * 60.0f / (120.0f * 96.0f);   /* samples a tick */
 static volatile uint32_t swing_t;                /* ticks the second step of a pair starts late (0 .. 8: triplets) */
 static float acc;                                /* samples into the tick */
@@ -64,6 +65,7 @@ void seq_tempo(float bpm)
 void seq_swing(float s) { swing_t = (uint32_t)(s < 0.0f ? 0.0f : s > 1.0f ? 8.0f : s * 8.0f + 0.5f); }
 void seq_ext(int on) { ext = (uint8_t)(on != 0); }
 void seq_clock_out(int on) { clk_out = (uint8_t)(on != 0); }
+void seq_gate_live(int gate) { gate_live = (int16_t)(gate < 0 ? -1 : gate > SEQ_GATE_TIE ? SEQ_GATE_TIE : gate); }
 void seq_play(int on) { req = on ? 1u : 2u; }
 int seq_playing(void) { return playing || req == 1u; }
 int seq_step(int part) { return playing ? pos[part] : -1; }
@@ -106,7 +108,7 @@ static void slot(int part, int k, uint32_t len)  /* a part's slot comes round */
     if ((k & 1) && !pat->steps16)
         return;
     {
-        uint32_t g = pat->gate[k], slen = pat->steps16 ? len / 2u : len;
+        uint32_t g = gate_live >= 0 ? (uint32_t)gate_live : pat->gate[k], slen = pat->steps16 ? len / 2u : len;
         seq_cb_note_on(pat->note[k]);
         sounding = 1;
         if (g >= SEQ_GATE_TIE)

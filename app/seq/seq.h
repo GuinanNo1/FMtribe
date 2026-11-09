@@ -41,6 +41,9 @@ void seq_tempo(float bpm);               /* 10 .. 600 */
 void seq_swing(float s);                 /* 0 .. 1: the second step of each pair later, up to a triplet feel */
 void seq_ext(int on);                    /* follow MIDI clock instead of the tempo */
 void seq_clock_out(int on);              /* send MIDI clock, start and stop */
+/* GATE TIME played live (the monotribe's GATE TIME button and ribbon): every synth note's gate from now on, 0 .. 127
+ * as the pattern's, instead of its own; -1 the pattern's again */
+void seq_gate_live(int gate);
 
 /* transport (either side) */
 void seq_play(int on);                   /* from step 1 */
