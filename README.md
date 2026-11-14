@@ -43,3 +43,5 @@ Built on [fm1-base](https://github.com/charlesvestal/fm1-base) by Charles Vestal
 
 M-VAVE and FM-1 are trademarks of their owners; Korg and monotribe are trademarks of Korg Inc. FMtribe is
 independent and is not affiliated with, endorsed by or supported by any of them.
+
+You can also try Fmtribe in the browser, no flashing needed, in the free community [FM-1 Emulator](https://fm1-emulator.atst.tools/).
